@@ -14,13 +14,10 @@
 # which means they terminate at the endpoints
 from itertools import combinations
 import pycosat
+from tabulate import tabulate
+import os
+import time
 
-with open("puzzle.txt") as file:
-    board = file.readlines()
-    for j in range(len(board)):
-        board[j] = [x for x in board[j]]
-        # if j != len(board) - 1:
-        board[j].pop()
 
 def findcolors():
     st = set()
@@ -58,6 +55,7 @@ def distinctcolor():
                     sub.append(-booleans[j][k][x])
                     exp.append(sub)
     return exp
+
 def valid_neighbour(i, j):
     ls = [(i+1, j), (i-1, j), (i, j - 1), (i, j + 1)]
     ret = []
@@ -65,6 +63,7 @@ def valid_neighbour(i, j):
         if a >= 0 and a < n and b >= 0 and b < n:
             ret.append((a, b))
     return ret
+
 def flow():
     def exactly2neighbours(i, j, color):
         nb = valid_neighbour(i, j)
@@ -84,6 +83,7 @@ def flow():
                 sb.append(-booleans[a][b][color])
             exp.append(sb)
         return exp
+    
     def transcribe(exp):
         st = set()
         for j in exp:
@@ -103,6 +103,7 @@ def flow():
             new.append("and")
         new.pop()
         print(" ".join([x for x in new]))
+
     def auxvar(exp):
         global varnum
         varnum += 1
@@ -141,13 +142,11 @@ def flow():
                 sb = []
                 for a, b in nb:
                     sb.append(booleans[a][b][val])
-                print(sb)
                 exp.append(sb)
                 for x in combinations(nb, 2):
                     sb = []
                     for a, b in x:
                         sb.append(-booleans[a][b][val])
-                    print(sb)
                     exp.append(sb)
             else:
                 auxiliary = []
@@ -157,54 +156,117 @@ def flow():
                 exp.append(auxiliary)
     return exp
 
-colors = {}
-revcolors = {}
-n = len(board)
-findcolors()
-c = len(colors)
-booleans = [[[l + k * c + j * c * n + 1 for l in range(c)] for k in range(n)] for j in range(n)]
-varnum = booleans[-1][-1][-1]
-clauses = []
+def print_board(solve):
+    if solve == "UNSAT" or solve == "UNKNOWN":
+        print(solve)
+    else:
+        color_map = {
+            'A': '\033[34m',  # Blue
+            'B': '\033[32m',  # Green
+            'C': '\033[31m',  # Red
+            'D': '\033[33m',  # Yellow
+            'E': '\033[35m',  # Magenta
+            'F': '\033[36m',  # Cyan
+            'G': '\033[37m',  # White/Gray
+            'H': '\033[97m',  # Bright White
+            'I': '\033[34m',  # Navy
+            'J': '\033[35m',  # Purple
+            'K': '\033[32m',  # Olive (Green)
+            'L': '\033[31m',  # Maroon
+            'M': '\033[33m',  # Orange (Yellow)
+            'N': '\033[36m',  # Teal
+            'O': '\033[30m',   # Black,
+            'P': '\033[90m',  # Cyan
+            'Q': '\033[91m',  # White/Gray
+            'R': '\033[92m',  # Bright White
+            'S': '\033[93m',  # Navy
+            'T': '\033[94m',  # Purple
+            'U': '\033[95m',  # Olive (Green)
+            'V': '\033[88m',  # Maroon
+            'W': '\033[87m',  # Orange (Yellow)
+            'X': '\033[86m',  # Teal
+            'Y': '\033[85m',   # Black,
+            'Z': '\033[84m',   # Black,
+            'a': '\033[34m',  # Blue
+            'b': '\033[32m',  # Green
+            'c': '\033[31m',  # Red
+            'd': '\033[33m',  # Yellow
+            'e': '\033[35m',  # Magenta
+            'f': '\033[36m',  # Cyan
+            'g': '\033[37m',  # White/Gray
+            'h': '\033[97m',  # Bright White
+            'i': '\033[34m',  # Navy
+            'j': '\033[35m',  # Purple
+            'k': '\033[32m',  # Olive (Green)
+            'l': '\033[31m',  # Maroon
+            'm': '\033[33m',  # Orange (Yellow)
+            'n': '\033[36m',  # Teal
+            'o': '\033[30m',   # Black,
+            'p': '\033[90m',  # Cyan
+            'q': '\033[91m',  # White/Gray
+            'r': '\033[92m',  # Bright White
+            's': '\033[93m',  # Navy
+            't': '\033[94m',  # Purple
+            'u': '\033[95m',  # Olive (Green)
+            'v': '\033[88m',  # Maroon
+            'w': '\033[87m',  # Orange (Yellow)
+            'x': '\033[86m',  # Teal
+            'y': '\033[85m',   # Black,
+            'z': '\033[84m',   # Black,
+            'ENDC': '\033[0m'
+        }
 
-clauses.extend(distinctcolor())
-clauses.extend(endpoints())
-clauses.extend(flow())
+        for j in range(n * n * c):
+            if solve[j] > 0:
+                cellno = j//c
+                row =cellno//n
+                col = cellno % n
+                board[row][col] = revcolors[j%c]
+        for j in board:
+            for x in j:
+                print(f"{color_map[x]}{x}", end="")
+            print()
 
-print(clauses)
+stats = [["file", "# SAT Vars", "# Clauses", "time"]]
+for filename in sorted(os.listdir("puzzles")):
+    file = os.path.join("puzzles", filename)
+    with open(file) as file:
+        start = time.time()
+        board = file.readlines()
+        for j in range(len(board)):
+            board[j] = [x for x in board[j]]
+            board[j].pop()
+        try:
 
-solve = pycosat.solve(clauses)
+            colors = {}
+            revcolors = {}
+            n = len(board)
+            findcolors()
+            c = len(colors)
+            booleans = [[[l + k * c + j * c * n + 1 for l in range(c)] for k in range(n)] for j in range(n)]
+            varnum = booleans[-1][-1][-1]
+            clauses = []
 
-if solve == "UNSAT" or solve == "UNKNOWN":
-    print(solve)
-else:
-    color_map = {
-        'A': '\033[34m',  # Blue
-        'B': '\033[32m',  # Green
-        'C': '\033[31m',  # Red
-        'D': '\033[33m',  # Yellow
-        'E': '\033[35m',  # Magenta
-        'F': '\033[36m',  # Cyan
-        'G': '\033[37m',  # White/Gray
-        'H': '\033[97m',  # Bright White
-        'I': '\033[34m',  # Navy
-        'J': '\033[35m',  # Purple
-        'K': '\033[32m',  # Olive (Green)
-        'L': '\033[31m',  # Maroon
-        'M': '\033[33m',  # Orange (Yellow)
-        'N': '\033[36m',  # Teal
-        'O': '\033[30m',   # Black,
-        'ENDC': '\033[0m'
-    }
-    for j in board:
-        print(j)
-    print()
-    for j in range(n * n * c):
-        if solve[j] > 0:
-            cellno = j//c
-            row =cellno//n
-            col = cellno % n
-            board[row][col] = revcolors[j%c]
-    for j in board:
-        for x in j:
-            print(f"{color_map[x]}{x}", end="")
-        print()
+            clauses.extend(distinctcolor())
+            clauses.extend(endpoints())
+            clauses.extend(flow())
+
+            solve = pycosat.solve(clauses)
+
+            # print("Solution for ", filename)
+
+            print_board(solve)
+
+            end = time.time()
+            
+            # print("total time taken: ", end - start)
+
+            # print("Variables used", varnum)
+
+            # print("Clauses: ", len(clauses))
+
+            stats.append([filename, varnum, len(clauses), end-start])
+        except:
+            print("error occurred in ", filename)
+            break
+print(tabulate(stats))
