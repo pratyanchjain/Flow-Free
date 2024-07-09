@@ -62,6 +62,11 @@ random.seed(seed)
 # because a lot of cancellation happens try and avoid the last move
 # for that also lets choose flows by random
 
+# key takeaway is to achieve good randomization keep high iterations
+# but more importantly choose flows at random.
+# this way you dont have to keep track of the last moves also
+# and repeatability and move cancellation gets reduced apparently
+# by a good amount
 
 last = [set() for _ in range(n + 1)]
 for _ in range(ITER):
