@@ -109,7 +109,7 @@ export default function Home() {
               }
               console.log("nums", flow[chosenFlow], flowComplete)
               if (flowComplete === 2) {
-                alert("flow complete!");
+                console.log("flow complete!");
                 return
               }
             }
@@ -162,10 +162,47 @@ export default function Home() {
     return (Math.abs(row1 - row2) + Math.abs(col1 - col2)) === 1;
   };
 
+  const getDirection = (index1: number, index2: number, boardSize: number) => {
+    const row1 = Math.floor(index1 / boardSize);
+    const col1 = index1 % boardSize;
+    const row2 = Math.floor(index2 / boardSize);
+    const col2 = index2 % boardSize;
+    if (row1 < row2) return 'bottom';
+    if (row1 > row2) return 'top';
+    if (col1 < col2) return 'right';
+    if (col1 > col2) return 'left';
+    return '';
+  };
+
+  const getConnector = (idx: number) => {
+    const value = boardValue(board, idx);
+    const flowArray = flow[value];
+    const flowIndex = flowArray.indexOf(idx);
+    const isConnector = flowIndex !== -1 && flowIndex !== flowArray.length - 1 && flowArray.length > 1;
+    if (isConnector) {
+      let connectClass = "connector "
+      let dir = getDirection(idx, flowArray[flowIndex + 1], board.length);
+      connectClass += dir;
+      console.log("dir is ", dir)
+      return connectClass;
+    }
+  }
+
+  const getBackgroundClass = (idx: number) => {
+    const value = boardValue(board, idx);
+    const flowArray = flow[value];
+    const flowIndex = flowArray.indexOf(idx);
+    const isConnector = flowIndex !== -1 && flowIndex !== flowArray.length - 1 && flowArray.length > 1;
+    if (!isConnector || boardValue(endPoint, idx)) {
+      return { background: cellColor[value] }
+    }
+    return {}
+  }
   return (
     <>
     <div className="board grid grid-cols-9">
       {board.flat().map((cell, idx) => (
+        <>
         <div
           key={idx}
           onDragStart={(e) => handleOnDrag(e, idx)}
@@ -173,13 +210,22 @@ export default function Home() {
           onDrop={handleDrop}
           className="widget boardCell h-20 w-20 flex justify-center items-center"
         >
-          <button           
+       <div className={`${getConnector(idx)}`}
+        style={{ backgroundColor: cellColor[cell] }}
+        ></div>
+
+            <button           
           draggable
-          style={{ backgroundColor: cellColor[cell] }}
-          className="circle flex m-3 justify-center items-center">
-            {cell ? cell : ""}
+          style={getBackgroundClass(idx)}
+          className={`flex m-3 justify-center item-center 
+          ${boardValue(endPoint, idx) ? "circle" : ""}
+          ${boardValue(endPoint, idx) === 0 && flow[boardValue(board, idx)].indexOf(idx) === flow[boardValue(board, idx)].length - 1
+            ? "smaller-circle" : ""
+          }`}>
+          {cell ? cell : ""}
           </button>
         </div>
+        </>
       ))}
     </div>
     </>

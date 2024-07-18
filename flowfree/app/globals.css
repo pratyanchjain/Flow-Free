@@ -52,6 +52,7 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
+  z-index: 1;
   height: 50px;
   width: 50px;
   border-radius: 50%;
@@ -59,4 +60,56 @@ body {
   color: white;
   font-size: 16px;
   font-weight: bold;
+}
+
+
+.smaller-circle {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1;
+  height: 40px;
+  width: 40px;
+  border-radius: 50%;
+  /* background-color: #3498db; */
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.connector {
+  /* positioedn: absolute; */
+
+  background-color: aliceblue;
+}
+
+.connector.top {
+  /* top: -10px; */
+  margin-bottom: 60px;
+  position: absolute;
+  width: 20px;
+  height: 80px;
+}
+
+.connector.right {
+  margin-left: 60px;
+  position: absolute;
+  width: 20px;
+  height: 80px;
+  transform: rotate(90deg);
+}
+
+.connector.bottom {
+  margin-top: 60px;
+  position: absolute;
+  width: 20px;
+  height: 80px;
+}
+
+.connector.left {
+  margin-right: 60px;
+  position: absolute;
+  width: 20px;
+  height: 80px;
+  transform: rotate(90deg);
 }
