@@ -47,6 +47,80 @@ export default function Home() {
     }
   }, [])
 
+
+  const getSolve = () => {
+    axios.get("http://localhost:3001/solution").then((response) => {
+      setBoard(response.data);
+      let solvedFlow: BoardType = Array.from({ length: response.data.length + 1 }, () => []);
+      let solvedBoard: BoardType = response.data;
+      for (let i = 0; i < board.length; i++) {
+        for (let j = 0; j < board.length; j++) {
+          let color = solvedBoard[i][j];
+          if (endPoint[i][j]) {
+            if (solvedFlow[color].length === 0) {
+              let stack: number[]  = [i * board.length + j]
+              let cnt = 0;
+              while (stack.length > 0) {
+                var last = stack.pop()
+                console.log("last is", last, stack)
+                if (last === undefined) {
+                  break;
+                }
+                solvedFlow[color].push(last)
+                let vb = getValidNeighbors(Math.floor(last / board.length), last % board.length, board.length, board.length);
+                for (let nb = 0; nb < vb.length; nb++) {
+                  let a = vb[nb][0]
+                  let b = vb[nb][1]
+                  let idx = a * board.length + b
+                  console.log("iterating over", idx, color)
+                  if (solvedBoard[a][b] === color && (!solvedFlow[color].includes(idx))) {
+                    console.log("pushing", idx);
+                    stack.push(idx)
+                  }
+                }
+
+                console.log(stack);
+                console.log(solvedFlow[color])
+                cnt++;
+                // if (cnt === 5) break;
+                
+              }
+            }
+          }
+        }
+      }
+      setFlow(solvedFlow);
+      console.log(solvedFlow);
+    })
+  }
+
+  type Coordinate = [number, number];
+
+const getValidNeighbors = (x: number, y: number, numRows: number, numCols: number): Coordinate[] => {
+  console.log("receiving", x, y)
+  const neighbors: Coordinate[] = [];
+
+  // Directions for top, right, bottom, left
+  const directions: Coordinate[] = [
+    [-1, 0],  // top
+    [1, 0],   // bottom
+    [0, -1],  // left
+    [0, 1]    // right
+  ];
+
+  for (const [dx, dy] of directions) {
+    const newX = x + dx;
+    const newY = y + dy;
+
+    // Check if the new coordinates are within the grid bounds
+    if (newX >= 0 && newX < numRows && newY >= 0 && newY < numCols) {
+      neighbors.push([newX, newY]);
+    }
+  }
+
+  return neighbors;
+};
+
   const getRandomColor = () => {
     const letters = '0123456789ABCDEF';
     let color = '#';
@@ -198,6 +272,7 @@ export default function Home() {
     }
     return {}
   }
+
   return (
     <>
     <div className="board grid grid-cols-9">
@@ -228,6 +303,7 @@ export default function Home() {
         </>
       ))}
     </div>
+    <button onClick={getSolve}>View Solution</button>
     </>
   );
 }
