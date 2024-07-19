@@ -1,7 +1,6 @@
 "use client"
 import { useState, useEffect} from "react";
 import axios from 'axios';
-import { init } from "next/dist/compiled/webpack/webpack";
 
 type BoardType = number[][];
 type cellColorType = {
@@ -327,6 +326,7 @@ const getValidNeighbors = (x: number, y: number, numRows: number, numCols: numbe
 
   return (
     <>
+    <div className="text-center p-5 m-5">
     <div className="board grid" style={{ gridTemplateColumns: `repeat(${boardSize}, 1fr)`, gridTemplateRows: `repeat(${boardSize}, 1fr)` }} >
       {board.flat().map((cell, idx) => (
         <>
@@ -348,9 +348,9 @@ const getValidNeighbors = (x: number, y: number, numRows: number, numCols: numbe
           draggable
           style= { {
             ...getBackgroundClass(idx),
-           width: `${getCellSize()/1.5}px`, height: `${getCellSize()/1.5}px`
+           width: `${getCellSize() / 1.5}px`, height: `${getCellSize() / 1.5}px`
           }}
-          className={`flex m-3 justify-center item-center 
+          className={`flex justify-center item-center 
           ${boardValue(endPoint, idx) ? "circle" : ""}
           ${boardValue(endPoint, idx) === 0 && flow[boardValue(board, idx)].indexOf(idx) === flow[boardValue(board, idx)].length - 1
             ? "smaller-circle" : ""
@@ -361,12 +361,15 @@ const getValidNeighbors = (x: number, y: number, numRows: number, numCols: numbe
         </>
       ))}
     </div>
-    <div className="flex flex-col text-start cursor-pointer">
-      <div onClick={getSolve}>View Solution</div>
-      <label>
-        <input style={{color: "black"}}type="number" defaultValue={boardSize} onChange={(num) => setBoardInput(Number(num.target.value))} />
-      </label>
-      <div onClick={genBoard}>Generate Board </div>
+    <div className="flex flex-row gap-4 cursor-pointer">
+      <div className="bg-white rounded text-black" onClick={getSolve}><p>View Solution</p></div>
+      <div className="flex flex-col gap-2">
+        <label>
+          <input title={"Enter Board Size: "} className="rounded p-2 text-black" type="number" defaultValue={boardSize} onChange={(num) => setBoardInput(Number(num.target.value))} />
+        </label>
+        <div className="bg-white rounded p-2 text-black"  onClick={genBoard}>Generate Board </div>
+        </div>
+    </div>
     </div>
     </>
   );
