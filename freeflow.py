@@ -213,7 +213,7 @@ class Solver():
                     col = cellno % self.n
                     self.board[row][col] = self.revcolors[j % self.c]
 
-            for row in self.board:
-                for x in row:
-                    print(f"{color_map[x]}{x}", end="")
-                print()
+            # for row in self.board:
+            #     for x in row:
+            #         print(f"{color_map[x]}{x}", end="")
+            #     print()

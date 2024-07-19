@@ -265,36 +265,69 @@ const getValidNeighbors = (x: number, y: number, numRows: number, numCols: numbe
   };
 
   const getConnector = (idx: number) => {
-    const value = boardValue(board, idx);
-    const flowArray = flow[value];
-    const flowIndex = flowArray.indexOf(idx);
-    const isConnector = flowIndex !== -1 && flowIndex !== flowArray.length - 1 && flowArray.length > 1;
-    if (isConnector) {
+    const {connector, val} = isConnector(idx);
+    if (connector) {
       let connectClass = "connector "
-      let dir = getDirection(idx, flowArray[flowIndex + 1], board.length);
+      let dir = getDirection(idx, val, board.length);
       connectClass += dir;
       return connectClass;
     }
   }
 
-  const getBackgroundClass = (idx: number) => {
+  const isConnector = (idx : number) => {
     const value = boardValue(board, idx);
     const flowArray = flow[value];
     const flowIndex = flowArray.indexOf(idx);
-    const isConnector = flowIndex !== -1 && flowIndex !== flowArray.length - 1 && flowArray.length > 1;
-    if (!isConnector || boardValue(endPoint, idx)) {
+    const connector = flowIndex !== -1 && flowIndex !== flowArray.length - 1 && flowArray.length > 1;
+    let val = flowArray[flowIndex + 1];
+    return {connector,  val};
+  }
+
+  const getBackgroundClass = (idx: number) => {
+    const {connector, val} = isConnector(idx);
+    const value = boardValue(board, idx);
+    if (!connector || boardValue(endPoint, idx)) {
       return { background: cellColor[value] }
     }
     return {}
   }
 
-  const getGridClass = () => {
-    return "board grid grid-cols-" + boardSize.toString()
+  const getConnectorStyle = (cell: number, idx: number) => {
+    const {connector, val} = isConnector(idx);
+    if (connector) {
+      let dir = getDirection(idx, val, board.length);
+      switch (dir) {
+        case 'top':
+          dir = 'bottom';
+          break
+        case 'bottom':
+          dir = 'top';
+          break
+        case 'left':
+          dir = 'right';
+          break
+        case 'right':
+          dir = 'left';
+          break
+      }
+      let size = getCellSize()
+      let obj = { backgroundColor: cellColor[cell],
+        width: `${size/4}px`, height: `${size + 0.25}px`,
+        [`margin-${dir}`] : `${size * 0.75}px`,
+      }
+      return obj;
+    }
+    return {}
+  }
+  const getCellSize = () => {
+    let containerSize = Math.min(window.innerHeight, window.innerWidth) * 0.75;
+    return containerSize / boardSize;
+
   }
 
   return (
     <>
-    <div className={getGridClass()}>
+    <div className="board grid" style={{ gridTemplateColumns: `repeat(${boardSize}, 1fr)`, gridTemplateRows: `repeat(${boardSize}, 1fr)` }} >
       {board.flat().map((cell, idx) => (
         <>
         <div
@@ -302,15 +335,21 @@ const getValidNeighbors = (x: number, y: number, numRows: number, numCols: numbe
           onDragStart={(e) => handleOnDrag(e, idx)}
           onDragOver={(e) => handleOnDragOver(e, idx)}
           onDrop={handleDrop}
-          className="widget boardCell h-20 w-20 flex justify-center items-center"
+          style = {{width: `${getCellSize()}px`, height: `${getCellSize()}px`}}
+          className="boardCell flex justify-center items-center"
         >
+        {isConnector(idx) && 
        <div draggable className={`${getConnector(idx)}`}
-        style={{ backgroundColor: cellColor[cell] }}
+        style={getConnectorStyle(cell, idx)}
         ></div>
+      }
 
-            <button           
+        <button           
           draggable
-          style={getBackgroundClass(idx)}
+          style= { {
+            ...getBackgroundClass(idx),
+           width: `${getCellSize()/1.5}px`, height: `${getCellSize()/1.5}px`
+          }}
           className={`flex m-3 justify-center item-center 
           ${boardValue(endPoint, idx) ? "circle" : ""}
           ${boardValue(endPoint, idx) === 0 && flow[boardValue(board, idx)].indexOf(idx) === flow[boardValue(board, idx)].length - 1
