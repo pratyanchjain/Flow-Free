@@ -15,10 +15,24 @@ export default function Home() {
   const [currCell, setCurrCell] = useState<number>(-1);
   const [flow, setFlow] = useState<BoardType>([]);
   const [endPoint, setEndPoint] = useState<BoardType>([]);
+  const [boardSize, setBoardSize] = useState<number>(9);
+  const [boardInput, setBoardInput] = useState<number>(9);
 
   useEffect(() => {
-    axios.get("http://localhost:3001/puzzle").then((response) => {
+    genBoard();
+    setBoardSize(boardInput)
+  }, [])
+
+  const genBoard = () => {
+    if (boardInput <= 1) {
+      return;
+    }
+    axios.post("http://localhost:3003/puzzle/", {size: boardInput}).then((response) => {
       console.log(response.data);
+      if (response.data === "Invalid Input") {
+        console.log("error!");
+        return;
+      }
       setBoard(response.data);
       let cellColors = {} as cellColorType
       for (let i = 0; i <= response.data.length; i++) {
@@ -30,10 +44,12 @@ export default function Home() {
       setFlow(initialFlow);
       let updatedBoard: BoardType = response.data;
       setEndPoint(updatedBoard.map(row => [...row]))
+      setBoardSize(response.data.length);
     })
-  }, [])
+  }
 
   useEffect(() => {
+    console.log("board Size: ", boardSize)
     if (draggingOver) {
       const interval = setInterval(() => {
         handleDrop()
@@ -49,7 +65,7 @@ export default function Home() {
 
 
   const getSolve = () => {
-    axios.get("http://localhost:3001/solution").then((response) => {
+    axios.get("http://localhost:3003/solution").then((response) => {
       setBoard(response.data);
       let solvedFlow: BoardType = Array.from({ length: response.data.length + 1 }, () => []);
       let solvedBoard: BoardType = response.data;
@@ -94,7 +110,7 @@ export default function Home() {
     })
   }
 
-  type Coordinate = [number, number];
+type Coordinate = [number, number];
 
 const getValidNeighbors = (x: number, y: number, numRows: number, numCols: number): Coordinate[] => {
   console.log("receiving", x, y)
@@ -257,7 +273,6 @@ const getValidNeighbors = (x: number, y: number, numRows: number, numCols: numbe
       let connectClass = "connector "
       let dir = getDirection(idx, flowArray[flowIndex + 1], board.length);
       connectClass += dir;
-      console.log("dir is ", dir)
       return connectClass;
     }
   }
@@ -273,9 +288,13 @@ const getValidNeighbors = (x: number, y: number, numRows: number, numCols: numbe
     return {}
   }
 
+  const getGridClass = () => {
+    return "board grid grid-cols-" + boardSize.toString()
+  }
+
   return (
     <>
-    <div className="board grid grid-cols-9">
+    <div className={getGridClass()}>
       {board.flat().map((cell, idx) => (
         <>
         <div
@@ -285,7 +304,7 @@ const getValidNeighbors = (x: number, y: number, numRows: number, numCols: numbe
           onDrop={handleDrop}
           className="widget boardCell h-20 w-20 flex justify-center items-center"
         >
-       <div className={`${getConnector(idx)}`}
+       <div draggable className={`${getConnector(idx)}`}
         style={{ backgroundColor: cellColor[cell] }}
         ></div>
 
@@ -303,7 +322,13 @@ const getValidNeighbors = (x: number, y: number, numRows: number, numCols: numbe
         </>
       ))}
     </div>
-    <button onClick={getSolve}>View Solution</button>
+    <div className="flex flex-col text-start cursor-pointer">
+      <div onClick={getSolve}>View Solution</div>
+      <label>
+        <input style={{color: "black"}}type="number" defaultValue={boardSize} onChange={(num) => setBoardInput(Number(num.target.value))} />
+      </label>
+      <div onClick={genBoard}>Generate Board </div>
+    </div>
     </>
   );
 }

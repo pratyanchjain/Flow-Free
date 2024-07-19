@@ -56,7 +56,8 @@ class Solver():
         for j in range(self.n):
             for k in range(self.n):
                 st.add(self.board[j][k])
-        st.remove(".")
+        if "." in st:
+            st.remove(".")
         for i, j in enumerate(st):
             self.colors[j] = i
             self.revcolors[i] = j

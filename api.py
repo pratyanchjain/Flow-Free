@@ -1,5 +1,5 @@
-from flask import Flask, jsonify
-from randomizing import gen, print_board
+from flask import Flask, jsonify, request
+from randomizing import RandomBoard
 from freeflow import Solver
 from flask_cors import CORS
 
@@ -9,9 +9,17 @@ bd = []
 
 @app.route('/puzzle/', methods=['GET', 'POST'])
 def board():
-    global bd
-    bd = gen()
-    return jsonify(bd)
+    if request.method == 'POST':
+        print("posting")
+        size = request.json.get('size')
+        if size is not None and isinstance(size, int):
+            print(size)
+            b = RandomBoard(size)
+            global bd
+            bd = b.gen()
+            return jsonify(bd)
+        else:
+            return jsonify("Invalid Input!")
 
 @app.route('/solution/', methods=['GET', 'POST'])
 def solution():
@@ -25,4 +33,4 @@ def solution():
     return jsonify(solver.board)
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=3001, debug=True)
+    app.run(host='0.0.0.0', port=3003, debug=True)
