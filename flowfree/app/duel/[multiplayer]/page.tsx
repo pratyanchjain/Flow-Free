@@ -1,6 +1,6 @@
 "use client"
 import {useEffect, useState} from "react"
-import axios from 'axios'
+import Board from "../../practice/page"
 import { socket } from '../../socket';
 import { useRouter, usePathname } from "next/navigation";
 
@@ -65,8 +65,9 @@ export default function Multiplayer() {
 
     return (
         <>
-        <div>{game !== '' ? `joined : ${game}` : "no one is here"}</div>
-        <div></div>
+        {game !== '' ? <Board />:
+            `joined : ${game}` 
+        }
         </>
     )
 }

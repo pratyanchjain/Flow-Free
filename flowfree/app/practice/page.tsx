@@ -30,7 +30,7 @@ export default function Board() {
     if (boardInput <= 1) {
       return;
     }
-    axios.post("http://localhost:3003/puzzle").then((response) => {
+    axios.post("http://localhost:3003/puzzle/", {size: boardInput}).then((response) => {
       console.log(response);
       if (response.data === "Invalid Input") {
         console.log("error!");
