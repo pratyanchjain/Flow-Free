@@ -1,22 +1,13 @@
 "use client"
-import Board from "@/app/board"
-import {useState} from "react"
-import Multiplayer from "./multiplayer";
+import { useRouter } from 'next/navigation'
 export default function App() {
-  const [practice, setPractice] = useState(false);
-  const [multiplayer, setMultiplayer] = useState(false);
+  const router = useRouter();
 
   return (
     <>
-    {practice && 
-    <Board />
-    }
-    {multiplayer &&
-    <Multiplayer />
-    }
     <div className="h-full text-center align-items-center gap-4">
-      <div onClick={() => setPractice(true)}>Practice</div>
-      <div onClick={() => setMultiplayer(true)}>Multiplayer</div>
+      <button className="bg-white rounded text-black px-4" onClick={() => router.push('/practice')}>Practice</button>
+      <button className="bg-white rounded text-black px-4" onClick={() => router.push('/duel/lobby')}>Multiplayer</button>
     </div>
     </>
   )

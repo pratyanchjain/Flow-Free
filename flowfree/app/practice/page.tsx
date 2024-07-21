@@ -1,7 +1,8 @@
 "use client"
 import { useState, useEffect} from "react";
 import axios from 'axios';
-import Confetti from 'react-confetti'
+import { useRouter } from "next/navigation";
+import getBoard from "../../pages/api/getBoard";
 
 type BoardType = number[][];
 type cellColorType = {
@@ -18,6 +19,7 @@ export default function Board() {
   const [boardSize, setBoardSize] = useState<number>(9);
   const [boardInput, setBoardInput] = useState<number>(9);
   const [showAnimation, setShowAnimation] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     genBoard();
@@ -28,8 +30,8 @@ export default function Board() {
     if (boardInput <= 1) {
       return;
     }
-    axios.post("http://localhost:3003/puzzle/", {size: boardInput}).then((response) => {
-      console.log(response.data);
+    axios.post("http://localhost:3003/puzzle").then((response) => {
+      console.log(response);
       if (response.data === "Invalid Input") {
         console.log("error!");
         return;
@@ -47,7 +49,6 @@ export default function Board() {
       setEndPoint(updatedBoard.map(row => [...row]))
       setBoardSize(response.data.length);
       setShowAnimation(false);
-
     })
   }
 
@@ -364,13 +365,14 @@ const getValidNeighbors = (x: number, y: number, numRows: number, numCols: numbe
 
   return (
     <>
-    {showAnimation &&
+    <button className="bg-white text-black px-4 m-2" onClick={() => router.push("/")}>Back</button>
+    {/* {showAnimation &&
       <Confetti
         width={window.innerWidth}
         height={window.innerHeight}
         gravity={0.2}
       />
-    }
+    } */}
     <div className="text-center p-5 m-5">
     <div className="board grid" style={{ gridTemplateColumns: `repeat(${boardSize}, 1fr)`, gridTemplateRows: `repeat(${boardSize}, 1fr)` }} >
       {board.flat().map((cell, idx) => (
