@@ -1,22 +1,28 @@
 "use client"
 import {useEffect, useState} from "react"
-import Board from "../../practice/page"
+import Board from "../../components/board"
 import { socket } from '../../socket';
 import { useRouter, usePathname } from "next/navigation";
+import { generateColors } from "../../utils/colorGenerator";
 
 type BoardType = number[][];
 type GameData = {
     Game: string;
-    Board: BoardType; // Replace `any` with the specific type of `Board` if known
+    Board: BoardType;
+    Color: cellColorType;
 };
-
+type cellColorType = {
+    [key: number]: string;
+  }
 export default function Multiplayer() {
     const [board, setBoard] = useState<BoardType>([])
     const [isConnected, setIsConnected] = useState(socket.connected);
     const [game, setGame] = useState('');
+    const [cellColor, setCellColor] = useState<cellColorType>({});
     const router = useRouter()
 
     useEffect(() => {
+        console.log("game", game)
         if (game !== '') {
             router.push("/duel/" + game);
         }
@@ -37,18 +43,9 @@ export default function Multiplayer() {
         function joinGame(response: GameData) {
             console.log("client", response);
             setGame(response.Game);
+            setCellColor(response.Color)
             setBoard(response.Board);
         }
-        // axios.get("http://localhost:3004/multiplayer/")
-        //     .then((response) => {
-        //         console.log(response);
-        //         if (response.data) {
-        //             setMsg(response.data);
-        //         }
-        //     })
-        //     .catch(error => {
-        //         console.error('There was an error with the axios request:', error);
-        //     });
 
         socket.on('connect', onConnect);
         socket.on('disconnect', onDisconnect);
@@ -65,7 +62,12 @@ export default function Multiplayer() {
 
     return (
         <>
-        {game !== '' ? <Board />:
+        {game !== '' ? 
+        <div className="flex flex-lg-row flex-col lg:flex-row m-4">
+            <Board InputBoard={board} cellColor={cellColor}/>
+            <Board InputBoard={board} cellColor={cellColor}/>
+        </div>
+        :
             `joined : ${game}` 
         }
         </>

@@ -44,8 +44,9 @@ io.on('connection', (socket) => {
             try {
                 let board = await getBoard(9);
                 console.log("board is", board);
-                io.to(player1).emit("matched", {Game: gameId, Board: board })
-                io.to(player2).emit("matched", {Game: gameId, Board: board })
+                let cellColor = generateColors(board.length)
+                io.to(player1).emit("matched", {Game: gameId, Board: board, Color:  cellColor})
+                io.to(player2).emit("matched", {Game: gameId, Board: board, Color:  cellColor })
                 console.log("emitted")
             } catch (error) {
                 console.log("error fetching board", error);
@@ -64,6 +65,25 @@ io.on('connection', (socket) => {
 function generateGameID() {
     return 'game-' + Math.random().toString(36).substring(2, 9);
 }
+
+function generateColors(boardSize) {
+    let cellColors = {}
+    for (let i = 0; i <= boardSize; i++) {
+        cellColors[i] = getRandomColor();
+    }
+    cellColors[0] = "#000000";
+    return cellColors;
+}
+
+function getRandomColor() {
+    const letters = '0123456789ABCDEF';
+    let color = '#';
+    for (let i = 0; i < 6; i++) {
+        color += letters[Math.floor(Math.random() * 16)];
+    }
+    return color;
+};
+
 
 server.listen(port, () => {
     console.log(`Server listening on port ${port}`);
