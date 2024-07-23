@@ -3,19 +3,10 @@ import {useEffect, useState} from "react"
 import Board from "../../components/board"
 import { socket } from '../../socket';
 import { useRouter, usePathname } from "next/navigation";
-import { generateColors } from "../../utils/colorGenerator";
 
-type BoardType = number[][];
-type GameData = {
-    Game: string;
-    Board: BoardType;
-    Color: cellColorType;
-};
-type cellColorType = {
-    [key: number]: string;
-  }
 export default function Multiplayer() {
-    const [board, setBoard] = useState<BoardType>([])
+    const [board1, setBoard1] = useState<BoardType>([])
+    const [board2, setBoard2] = useState<BoardType>([])
     const [isConnected, setIsConnected] = useState(socket.connected);
     const [game, setGame] = useState('');
     const [cellColor, setCellColor] = useState<cellColorType>({});
@@ -44,13 +35,15 @@ export default function Multiplayer() {
             console.log("client", response);
             setGame(response.Game);
             setCellColor(response.Color)
-            setBoard(response.Board);
+            setBoard1(response.Board);
+            setBoard2(response.Board)
         }
 
         socket.on('connect', onConnect);
         socket.on('disconnect', onDisconnect);
         socket.on('matched', (response:  GameData) => joinGame(response))
         socket.on('aborted', () => setGame(''))
+        socket.on('opponentMove', (response: BoardType) => setBoard2(response))
 
         return () => {
             socket.off('connect', onConnect);
@@ -59,13 +52,16 @@ export default function Multiplayer() {
         };
     }, []);
 
-
+    function updateMove(board: BoardType) {
+        console.log("op move emitted");
+        socket.emit("updateMove", board);
+    }
     return (
         <>
         {game !== '' ? 
         <div className="flex flex-lg-row flex-col lg:flex-row m-4">
-            <Board InputBoard={board} cellColor={cellColor}/>
-            <Board InputBoard={board} cellColor={cellColor}/>
+            <Board InputBoard={board1} cellColor={cellColor} onBoardUpdate={() => updateMove(board1)} mode="duel"/>
+            <Board InputBoard={board2} cellColor={cellColor} onBoardUpdate={() => updateMove(board2)} mode="duel"/>
         </div>
         :
             `joined : ${game}` 

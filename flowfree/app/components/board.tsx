@@ -3,12 +3,9 @@ import { useState, useEffect} from "react";
 import axios from 'axios';
 import { useRouter } from "next/navigation";
 import getBoard from "../../pages/api/getBoard";
+import { on } from "stream";
 
-type BoardType = number[][];
-type cellColorType = {
-  [key: number]: string;
-}
-const Board = ( { InputBoard, cellColor } : {InputBoard: BoardType, cellColor: cellColorType } ) => {
+const Board: React.FC<BoardProps> = ( { InputBoard, cellColor, onBoardUpdate = () => {}, mode}) => {
   const [board, setBoard] = useState<BoardType>([]);
   const [chosenFlow, setChosenFlow] = useState(-1);
   const [draggingOver, setDraggingOver] = useState(false);
@@ -20,9 +17,25 @@ const Board = ( { InputBoard, cellColor } : {InputBoard: BoardType, cellColor: c
   const router = useRouter();
 
   useEffect(() => {
+    console.log("board setup  being called")
     boardSetup();
+    console.log(InputBoard)
   }, [InputBoard])
 
+  useEffect(() => {
+    if (mode !== "") {
+      console.log("flow setup  being called")
+      console.log(endPoint);
+      if (endPoint.length === 0) {
+        boardSetup()
+      }
+      if (endPoint.length !== 0) {
+        flowSetup(InputBoard);
+        console.log(InputBoard)
+      }
+    }
+  }, [InputBoard])
+ 
   const boardSetup = () => {
     setBoard(InputBoard);
     console.log("input is ", InputBoard)
@@ -30,6 +43,7 @@ const Board = ( { InputBoard, cellColor } : {InputBoard: BoardType, cellColor: c
     setFlow(initialFlow);
     let updatedBoard: BoardType = InputBoard;
     setEndPoint(updatedBoard.map(row => [...row]))
+    console.log("st to", updatedBoard)
     setBoardSize(InputBoard.length);
   }
 
@@ -47,50 +61,45 @@ const Board = ( { InputBoard, cellColor } : {InputBoard: BoardType, cellColor: c
     }
   }, [])
 
-
-  const getSolve = () => {
-    axios.get("http://localhost:3003/solution").then((response) => {
-      setBoard(response.data);
-      let solvedFlow: BoardType = Array.from({ length: response.data.length + 1 }, () => []);
-      let solvedBoard: BoardType = response.data;
-      for (let i = 0; i < board.length; i++) {
-        for (let j = 0; j < board.length; j++) {
-          let color = solvedBoard[i][j];
-          if (endPoint[i][j]) {
-            if (solvedFlow[color].length === 0) {
-              let stack: number[]  = [i * board.length + j]
-              let cnt = 0;
-              while (stack.length > 0) {
-                var last = stack.pop()
-                console.log("last is", last, stack)
-                if (last === undefined) {
-                  break;
-                }
-                solvedFlow[color].push(last)
-                let vb = getValidNeighbors(Math.floor(last / board.length), last % board.length, board.length, board.length);
-                for (let nb = 0; nb < vb.length; nb++) {
-                  let a = vb[nb][0]
-                  let b = vb[nb][1]
-                  let idx = a * board.length + b
-                  console.log("iterating over", idx, color)
-                  if (solvedBoard[a][b] === color && (!solvedFlow[color].includes(idx))) {
-                    console.log("pushing", idx);
-                    stack.push(idx)
-                  }
-                }
-
-                console.log(stack);
-                console.log(solvedFlow[color])
-                cnt++;
-                // if (cnt === 5) break;
-                
+  const flowSetup = (solvedBoard: BoardType) => {
+    setBoard(solvedBoard);
+    console.log("ep", endPoint)
+    let solvedFlow: BoardType = Array.from({ length: solvedBoard.length + 1 }, () => []);
+    for (let i = 0; i < solvedBoard.length; i++) {
+      for (let j = 0; j < solvedBoard.length; j++) {
+        let color = solvedBoard[i][j];
+        if (endPoint[i][j] !== 0) {
+          if (solvedFlow[color].length === 0) {
+            let stack: number[]  = [i * solvedBoard.length + j]
+            while (stack.length > 0) {
+              var last = stack.pop()
+              if (last === undefined) {
+                break;
               }
+              solvedFlow[color].push(last)
+              let vb = getValidNeighbors(Math.floor(last / solvedBoard.length), last % solvedBoard.length, solvedBoard.length, solvedBoard.length);
+              for (let nb = 0; nb < vb.length; nb++) {
+                let a = vb[nb][0]
+                let b = vb[nb][1]
+                let idx = a * solvedBoard.length + b
+                if (solvedBoard[a][b] === color && (!solvedFlow[color].includes(idx))) {
+                  stack.push(idx)
+                }
+              }
+
+              console.log(stack);
+              console.log(solvedFlow[color])
             }
           }
         }
       }
-      setFlow(solvedFlow);
-      console.log(solvedFlow);
+    }
+    setFlow(solvedFlow);
+  }
+
+  const getSolve = () => {
+    axios.get("http://localhost:3003/solution").then((response) => {
+      flowSetup(response.data);
     })
   }
 
@@ -214,6 +223,7 @@ const getValidNeighbors = (x: number, y: number, numRows: number, numCols: numbe
         // if (valuesInFlow.has(cellIndex) && cellValue === 0) {}
       }
     }
+    onBoardUpdate(updatedBoard);
   }
 
 

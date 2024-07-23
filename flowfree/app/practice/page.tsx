@@ -6,10 +6,6 @@ import getBoard from "../../pages/api/getBoard";
 import Board from "@/app/components/board";
 import { generateColors } from "../utils/colorGenerator";
 
-type BoardType = number[][];
-type cellColorType = {
-  [key: number]: string;
-}
 export default function Practice() {
   const [cellColor, setCellColor] = useState<cellColorType>({});
   const [board, setBoard] = useState<BoardType>([]);
@@ -47,7 +43,7 @@ export default function Practice() {
         gravity={0.2}
       />
     } */}
-    <Board  InputBoard={board} cellColor={cellColor}/>
+    <Board  InputBoard={board} cellColor={cellColor} mode=""/>
     <div className="flex flex-row gap-4 cursor-pointer my-2" style={{marginTop: "25px"}}>
       {/* <div className="w-full"><button className=" h-full w-full bg-white rounded text-black px-4" onClick={}><p>View Solution</p></button></div> */}
       <div className="w-full flex flex-col gap-2 bg-black">

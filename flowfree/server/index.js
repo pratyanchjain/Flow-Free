@@ -54,6 +54,11 @@ io.on('connection', (socket) => {
             
         }
     });
+
+    socket.on("updateMove", (board) => {
+        console.log("emitted op move")
+        io.to(myMap[socket.id]).emit("opponentMove", board);
+    })
   
     socket.on('disconnect', () => {
         queue = queue.filter((num) => num !== socket.id && num !== myMap[socket.id]);
