@@ -17,19 +17,28 @@ const Board: React.FC<BoardProps> = ( { InputBoard, cellColor, onBoardUpdate = (
   const router = useRouter();
 
   useEffect(() => {
-    console.log("board setup  being called")
-    boardSetup();
-    console.log(InputBoard)
+    if (mode == '') {
+      console.log("board setup  being called")
+      boardSetup();
+      console.log(InputBoard)
+    }
   }, [InputBoard])
+
+  // useEffect(() => {
+  //   if (mode === 'solution') {
+  //     flowSetup(InputBoard);
+  //   }
+  // }, [InputBoard])
 
   useEffect(() => {
     if (mode !== "") {
-      console.log("flow setup  being called")
       console.log(endPoint);
       if (endPoint.length === 0) {
+        console.log("board setup  being called")
         boardSetup()
       }
       if (endPoint.length !== 0) {
+        console.log("flow setup  being called")
         flowSetup(InputBoard);
         console.log(InputBoard)
       }
@@ -63,13 +72,15 @@ const Board: React.FC<BoardProps> = ( { InputBoard, cellColor, onBoardUpdate = (
 
   const flowSetup = (solvedBoard: BoardType) => {
     setBoard(solvedBoard);
+    console.log("before", flow)
     console.log("ep", endPoint)
     let solvedFlow: BoardType = Array.from({ length: solvedBoard.length + 1 }, () => []);
     for (let i = 0; i < solvedBoard.length; i++) {
       for (let j = 0; j < solvedBoard.length; j++) {
         let color = solvedBoard[i][j];
-        if (endPoint[i][j] !== 0) {
-          if (solvedFlow[color].length === 0) {
+        if (endPoint[i][j] !== 0 && color !== 0) {
+          if (solvedFlow[color].length <= 1) {
+            solvedFlow[color] = []
             let stack: number[]  = [i * solvedBoard.length + j]
             while (stack.length > 0) {
               var last = stack.pop()
@@ -86,27 +97,18 @@ const Board: React.FC<BoardProps> = ( { InputBoard, cellColor, onBoardUpdate = (
                   stack.push(idx)
                 }
               }
-
-              console.log(stack);
-              console.log(solvedFlow[color])
             }
           }
         }
       }
     }
     setFlow(solvedFlow);
-  }
-
-  const getSolve = () => {
-    axios.get("http://localhost:3003/solution").then((response) => {
-      flowSetup(response.data);
-    })
+    console.log("after", solvedFlow)
   }
 
 type Coordinate = [number, number];
 
 const getValidNeighbors = (x: number, y: number, numRows: number, numCols: number): Coordinate[] => {
-  console.log("receiving", x, y)
   const neighbors: Coordinate[] = [];
 
   // Directions for top, right, bottom, left
@@ -227,14 +229,14 @@ const getValidNeighbors = (x: number, y: number, numRows: number, numCols: numbe
   }
 
 
-  useEffect(() => {
-    if (isSolved()) {
-      setShowAnimation(true);
-      setTimeout(() => {
-        boardSetup();
-      }, 5000)
-    }
-  }, [updateFlow])
+  // useEffect(() => {
+  //   if (isSolved()) {
+  //     setShowAnimation(true);
+  //     setTimeout(() => {
+  //       boardSetup();
+  //     }, 5000)
+  //   }
+  // }, [updateFlow])
 
   function boardValue(arr: BoardType, cell: number) {
     return arr[Math.floor(cell / board.length)][cell % board.length];
@@ -294,22 +296,22 @@ const getValidNeighbors = (x: number, y: number, numRows: number, numCols: numbe
       let dir = getDirection(idx, val, board.length);
       switch (dir) {
         case 'top':
-          dir = 'bottom';
+          dir = 'Bottom';
           break
         case 'bottom':
-          dir = 'top';
+          dir = 'Top';
           break
         case 'left':
-          dir = 'right';
+          dir = 'Right';
           break
         case 'right':
-          dir = 'left';
+          dir = 'Left';
           break
       }
       let size = getCellSize()
       let obj = { backgroundColor: cellColor[cell],
         width: `${size/4}px`, height: `${size + 0.25}px`,
-        [`margin-${dir}`] : `${size * 0.75}px`,
+        [`margin${dir}`] : `${size * 0.75}px`,
       }
       return obj;
     }
@@ -367,7 +369,8 @@ const getValidNeighbors = (x: number, y: number, numRows: number, numCols: numbe
           className="boardCell flex justify-center items-center"
         >
         {isConnector(idx) && 
-       <div draggable className={`${getConnector(idx)}`}
+       <div
+       draggable className={`${getConnector(idx)}`}
         style={getConnectorStyle(cell, idx)}
         ></div>
       }
@@ -379,7 +382,8 @@ const getValidNeighbors = (x: number, y: number, numRows: number, numCols: numbe
            width: `${getCellSize() / 1.5}px`, height: `${getCellSize() / 1.5}px`
           }}
           className={`flex justify-center item-center 
-          ${boardValue(endPoint, idx) ? "circle" : ""}
+          ${
+            boardValue(endPoint, idx) ? "circle" : ""}
           ${boardValue(endPoint, idx) === 0 && flow[boardValue(board, idx)].indexOf(idx) === flow[boardValue(board, idx)].length - 1
             ? "smaller-circle" : ""
           }`}>

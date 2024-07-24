@@ -10,7 +10,7 @@ export default function Practice() {
   const [cellColor, setCellColor] = useState<cellColorType>({});
   const [board, setBoard] = useState<BoardType>([]);
   const [boardInput, setBoardInput] = useState<number>(9);
-
+  const [mode, setMode] = useState('')
   const router = useRouter();
 
   useEffect(() => {
@@ -30,6 +30,14 @@ export default function Practice() {
       setBoard(response.data);
       console.log("setting board to", response.data)
       setCellColor(generateColors(response.data.length));
+      setMode('')
+    })
+  }
+
+  const getSolve = () => {
+    axios.get("http://localhost:3003/solution").then((response) => {
+      setBoard(response.data);
+      setMode("solution")
     })
   }
 
@@ -43,9 +51,9 @@ export default function Practice() {
         gravity={0.2}
       />
     } */}
-    <Board  InputBoard={board} cellColor={cellColor} mode=""/>
+    <Board  InputBoard={board} cellColor={cellColor} mode={mode}/>
     <div className="flex flex-row gap-4 cursor-pointer my-2" style={{marginTop: "25px"}}>
-      {/* <div className="w-full"><button className=" h-full w-full bg-white rounded text-black px-4" onClick={}><p>View Solution</p></button></div> */}
+      <div className="w-full"><button className=" h-full w-full bg-white rounded text-black px-4" onClick={getSolve}><p>View Solution</p></button></div>
       <div className="w-full flex flex-col gap-2 bg-black">
         <label>
           <input placeholder="Enter board size: " className="w-full rounded p-2 text-black" type="number" defaultValue={boardInput} onChange={(num) => setBoardInput(Number(num.target.value))}/>
