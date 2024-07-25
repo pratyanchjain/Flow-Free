@@ -27,7 +27,6 @@ app.get('/', (req, res) => {
 io.on('connection', (socket) => {
     console.log('a user connected');
     socket.on('hi', (msg) => {
-        console.log("reaching")
         // Broadcast the received message to all connected clients
         io.emit('message', msg);
       });
@@ -42,8 +41,7 @@ io.on('connection', (socket) => {
             myMap[player2] = player1
             let gameId = generateGameID();
             try {
-                let board = await getBoard(9);
-                console.log("board is", board);
+                let board = await getBoard(5);
                 let cellColor = generateColors(board.length)
                 io.to(player1).emit("matched", {Game: gameId, Board: board, Color:  cellColor})
                 io.to(player2).emit("matched", {Game: gameId, Board: board, Color:  cellColor })
@@ -56,8 +54,13 @@ io.on('connection', (socket) => {
     });
 
     socket.on("updateMove", (board) => {
-        console.log("emitted op move")
         io.to(myMap[socket.id]).emit("opponentMove", board);
+    })
+
+    socket.on("gameWon", () => {
+        console.log("won the game")
+        io.to(socket.id).emit("endGame", "you won");
+        io.to(myMap[socket.id]).emit("endGame", "opponent won")
     })
   
     socket.on('disconnect', () => {

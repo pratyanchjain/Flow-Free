@@ -1,5 +1,5 @@
 "use client"
-import {useEffect, useState} from "react"
+import {useEffect, useState, useRef} from "react"
 import Board from "../../components/board"
 import { socket } from '../../socket';
 import { useRouter, usePathname } from "next/navigation";
@@ -8,23 +8,20 @@ export default function Multiplayer() {
     const [board1, setBoard1] = useState<BoardType>([])
     const [board2, setBoard2] = useState<BoardType>([])
     const [isConnected, setIsConnected] = useState(socket.connected);
-    const [game, setGame] = useState('');
     const [cellColor, setCellColor] = useState<cellColorType>({});
+    const [game, setGame] = useState('')
     const router = useRouter()
-
-    useEffect(() => {
-        console.log("game", game)
-        if (game !== '') {
-            router.push("/duel/" + game);
-        }
-    }, [usePathname()])
+    const path = usePathname()
+    const [winner, setWinner] = useState('');
 
     useEffect(() => {
         socket.connect(); // Manually connect
 
         function onConnect() {
             setIsConnected(true);
-            socket.emit("joinQueue");
+            if (!path?.includes("game")) {
+                socket.emit("joinQueue");
+            }
         }
 
         function onDisconnect() {
@@ -39,11 +36,21 @@ export default function Multiplayer() {
             setBoard2(response.Board)
         }
 
+        function endGame(response: string) {
+            if (response === "you won") {
+                setWinner("1")
+            }
+            else {
+                setWinner("2")
+            }
+        }
+
         socket.on('connect', onConnect);
         socket.on('disconnect', onDisconnect);
         socket.on('matched', (response:  GameData) => joinGame(response))
         socket.on('aborted', () => setGame(''))
         socket.on('opponentMove', (response: BoardType) => setBoard2(response))
+        socket.on('endGame', (response: string) => endGame(response));
 
         return () => {
             socket.off('connect', onConnect);
@@ -52,17 +59,24 @@ export default function Multiplayer() {
         };
     }, []);
 
-    function updateMove(board: BoardType) {
-        console.log("op move emitted");
-        socket.emit("updateMove", board);
+    const updateMove = (board: BoardType | string) => {
+        console.log("reaching updateMove", JSON.stringify(board))
+        if (board !== "solved!") {
+            socket.emit("updateMove", board);
+        } else {
+            console.log("emitted won")
+            socket.emit("gameWon");
+        }
     }
     return (
         <>
         {game !== '' ? 
+        winner === '' ?
         <div className="flex flex-lg-row flex-col lg:flex-row m-4">
-            <Board InputBoard={board1} cellColor={cellColor} onBoardUpdate={() => updateMove(board1)} mode="duel"/>
-            <Board InputBoard={board2} cellColor={cellColor} onBoardUpdate={() => updateMove(board2)} mode="duel"/>
-        </div>
+            <Board InputBoard={board1} cellColor={cellColor} onBoardUpdate={updateMove} mode="duel"/>
+            <Board InputBoard={board2} cellColor={cellColor} onBoardUpdate={updateMove} mode="duel"/>
+        </div> : 
+        winner === "1" ? <div>You won!</div> : <div>Opponent won</div>
         :
             `joined : ${game}` 
         }

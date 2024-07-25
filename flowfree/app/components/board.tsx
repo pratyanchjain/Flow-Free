@@ -4,6 +4,7 @@ import axios from 'axios';
 import { useRouter } from "next/navigation";
 import getBoard from "../../pages/api/getBoard";
 import { on } from "stream";
+import { json } from "stream/consumers";
 
 const Board: React.FC<BoardProps> = ( { InputBoard, cellColor, onBoardUpdate = () => {}, mode}) => {
   const [board, setBoard] = useState<BoardType>([]);
@@ -15,6 +16,7 @@ const Board: React.FC<BoardProps> = ( { InputBoard, cellColor, onBoardUpdate = (
   const [boardSize, setBoardSize] = useState<number>(9);
   const [showAnimation, setShowAnimation] = useState(false);
   const router = useRouter();
+
 
   useEffect(() => {
     if (mode == '') {
@@ -45,6 +47,16 @@ const Board: React.FC<BoardProps> = ( { InputBoard, cellColor, onBoardUpdate = (
     }
   }, [InputBoard])
  
+  useEffect(() => {
+    console.log("issolve", JSON.stringify(board))
+    if (isSolved()) {
+      onBoardUpdate("solved!");
+      console.log("solved! from effect")
+    }
+  }, [board, flow]);
+
+
+
   const boardSetup = () => {
     setBoard(InputBoard);
     console.log("input is ", InputBoard)
@@ -133,7 +145,7 @@ const getValidNeighbors = (x: number, y: number, numRows: number, numCols: numbe
 };
 
 
-  function handleOnDrag(e: React.DragEvent, cell: number) {
+  const handleOnDrag = (e: React.DragEvent, cell: number) => {
     let val = boardValue(board, cell)
     console.log("val", val)
     console.log(board);
@@ -158,35 +170,34 @@ const getValidNeighbors = (x: number, y: number, numRows: number, numCols: numbe
     }
   }
 
-  function handleOnDragOver(e: React.DragEvent, idx: number) {
+
+  const handleOnDragOver = (e: React.DragEvent, idx: number) => {
     e.preventDefault()
+    let updatedFlow = flow.map(row=> [...row])
     if (currCell !== -1 && chosenFlow !== -1) {
       if (isNeighbour(idx, currCell, board.length)) {
         if (boardValue(board, idx) === 0) {
           setCurrCell(idx);
           updateCellColor(idx)
-          flow[chosenFlow].push(idx)
+          updatedFlow[chosenFlow].push(idx)
         }
         else {
           if (boardValue(board, idx) === chosenFlow) {
-            if (flow[chosenFlow].includes(idx)) {
-              flow[chosenFlow].splice(flow[chosenFlow].indexOf(idx) + 1, flow[chosenFlow].length);
+            if (updatedFlow[chosenFlow].includes(idx)) {
+              updatedFlow[chosenFlow].splice(updatedFlow[chosenFlow].indexOf(idx) + 1, updatedFlow[chosenFlow].length);
             } else {
-              console.log("pushed", idx)
-              flow[chosenFlow].push(idx);
-              console.log(flow[chosenFlow])
+              updatedFlow[chosenFlow].push(idx);
             }
             if (boardValue(endPoint, idx) === chosenFlow) {
               let flowComplete = 0;
-              for (let i = 0; i < flow[chosenFlow].length; i++) {
-                const elem = flow[chosenFlow][i];
+              for (let i = 0; i < updatedFlow[chosenFlow].length; i++) {
+                const elem = updatedFlow[chosenFlow][i];
                 if (boardValue(endPoint, elem)) {
                   flowComplete += 1;
                 }
               }
-              console.log("nums", flow[chosenFlow], flowComplete)
               if (flowComplete === 2) {
-                console.log("flow complete!");
+                setFlow(updatedFlow.map(row=>[...row]))
                 return
               }
             }
@@ -196,22 +207,23 @@ const getValidNeighbors = (x: number, y: number, numRows: number, numCols: numbe
         }
       }
     }
+    setFlow(updatedFlow.map(row=>[...row]))
   }
 
-  function handleDrop() {
+  const handleDrop = () => {
     setDraggingOver(false);
   }
 
   const updateCellColor = (cell: number) => {
     if (chosenFlow) {
-      console.log(chosenFlow, cell)
-      let updatedBoard = [...board]
+      let updatedBoard = board.map(row => [...row]);
       updatedBoard[Math.floor(cell / board.length)][cell % board.length] = chosenFlow;
+      setBoard(updatedBoard.map(row => [...row]));
     }
   }
 
   const updateFlow = () => {
-    const updatedBoard = [...board];
+    const updatedBoard =  board.map(row => [...row]);
     const valuesInFlow = new Set(flow[chosenFlow]);
 
     for (let row = 0; row < board.length; row++) {
@@ -225,9 +237,11 @@ const getValidNeighbors = (x: number, y: number, numRows: number, numCols: numbe
         // if (valuesInFlow.has(cellIndex) && cellValue === 0) {}
       }
     }
-    onBoardUpdate(updatedBoard);
+    setBoard(updatedBoard.map(row => [...row]));
+    console.log("set to ", JSON.stringify(updatedBoard))
   }
 
+  
 
   // useEffect(() => {
   //   if (isSolved()) {
@@ -238,7 +252,7 @@ const getValidNeighbors = (x: number, y: number, numRows: number, numCols: numbe
   //   }
   // }, [updateFlow])
 
-  function boardValue(arr: BoardType, cell: number) {
+  const boardValue = (arr: BoardType, cell: number) => {
     return arr[Math.floor(cell / board.length)][cell % board.length];
   }
 
@@ -323,27 +337,35 @@ const getValidNeighbors = (x: number, y: number, numRows: number, numCols: numbe
   }
 
   const isSolved = () => {
+    console.log(JSON.stringify(board), board)
     if (board.length === 0) {
+      console.log("false", flow)
       return false;
     }
     for (let i = 0; i < boardSize; i++) {
       for (let j = 0; j < boardSize; j++) {
-        if (board[i][j] == 0) {
+        if (board[i][j] === 0) {
+          console.log("false")
           return false;
         }
       }
     }
-    flow.forEach((color) => {
+    let flowCopy = flow.map(row => [...row])
+    flowCopy.shift()
+    console.log("flowCopy", JSON.stringify(flowCopy))
+    for (const color of flowCopy) {
       let cnt = 0;
-      color.forEach((index) => {
+      for (const index of color) {
         if (boardValue(endPoint, index)) {
           cnt += 1
         }
-      })
+      }
       if (cnt < 2) {
+        console.log("false", JSON.stringify(flow), color, flow)
         return false;
       }
-    })
+    }
+    console.log("solved!")
     return true;
   }
 

@@ -7,7 +7,7 @@ type cellColorType = {
 interface BoardProps {
     InputBoard: BoardType;
     cellColor: cellColorType;
-    onBoardUpdate?: (newBoardState: BoardType) => void;
+    onBoardUpdate?: (newBoardState: BoardType | string) => void;
     mode: string;
 }
   
