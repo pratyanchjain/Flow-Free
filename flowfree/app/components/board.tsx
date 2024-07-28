@@ -12,39 +12,25 @@ const Board: React.FC<BoardProps> = ( { InputBoard, cellColor, onBoardUpdate = (
   const [boardSize, setBoardSize] = useState<number>(9);
 
   useEffect(() => {
-    console.log("rerendering child")
-    if (mode === '') {
-      boardSetup();
-    }
-    if (mode === 'solution') {
-      flowSetup(InputBoard);
-    }
-    if (mode === "duel") {
-      console.log("mode", mode)
-      console.log(board, endPoint)
-      boardSetup()
-      // if (endPoint.length === 0) {
-      //   boardSetup()
-      // }
-      // if (endPoint.length !== 0) {
-      //   flowSetup(InputBoard);
-      // }
-    }
-  }, [InputBoard])
+    console.log("rerendering")
+    const updateBoard = setTimeout(() => {
+      if (board.length !== 0) {
+        if (isSolved()) {
+          onBoardUpdate("solved!");
+        } else {
+          onBoardUpdate(board);
+        }
+      }
+    }, 2000)
 
-  useEffect(() => {
-    if (isSolved()) {
-      onBoardUpdate("solved!");
-    }
-  }, [board, flow]);
+    return () => clearTimeout(updateBoard);
+  }, [board]);
 
   useEffect(() => {
     updateFlow()
   }, [flow])
 
   const boardSetup = () => {
-    console.log("safa", InputBoard, board, endPoint)
-    console.log("safa", JSON.stringify(InputBoard), JSON.stringify(board), JSON.stringify(endPoint));
     setBoard(InputBoard);
     const initialFlow: BoardType = Array.from({ length: InputBoard.length + 1 }, () => []);
     setFlow(initialFlow);
@@ -67,7 +53,6 @@ const Board: React.FC<BoardProps> = ( { InputBoard, cellColor, onBoardUpdate = (
   }, [])
 
   const flowSetup = (solvedBoard: BoardType) => {
-    console.log("flow setup", solvedBoard)
     setBoard(solvedBoard);    
     let solvedFlow: BoardType = Array.from({ length: solvedBoard.length + 1 }, () => []);
     for (let i = 0; i < solvedBoard.length; i++) {
@@ -99,6 +84,25 @@ const Board: React.FC<BoardProps> = ( { InputBoard, cellColor, onBoardUpdate = (
     }
     setFlow(solvedFlow);
   }
+
+  useEffect(() => {
+    if (mode === '') {
+      boardSetup();
+    }
+    if (mode === 'solution') {
+      flowSetup(InputBoard);
+    }
+    if (mode === "duel") {
+      // console.log(board, endPoint)
+      // boardSetup()
+      if (endPoint.length === 0) {
+        boardSetup()
+      }
+      if (endPoint.length !== 0) {
+        flowSetup(InputBoard);
+      }
+    }
+  }, [InputBoard])
 
 type Coordinate = [number, number];
 

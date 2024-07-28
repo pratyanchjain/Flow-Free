@@ -17,7 +17,6 @@ const Multiplayer = () => {
     useEffect(() => {
         console.log("rerendering")
         console.log(board1, board2)
-        console.log(JSON.stringify(board1), JSON.stringify(board2))
     }, [board1, board2])
 
     useEffect(() => {
@@ -55,23 +54,44 @@ const Multiplayer = () => {
         socket.on('disconnect', onDisconnect);
         socket.on('matched', (response:  GameData) => joinGame(response))
         socket.on('aborted', () => setGame(''))
-        socket.on('opponentMove', (response: BoardType) => setBoard2(response))
+        socket.on('opponentMove', (response: BoardType) => {
+            console.log("response from op move", response);
+            setBoard2(response)
+        })
         socket.on('endGame', (response: string) => endGame(response));
 
         return () => {
             socket.off('connect', onConnect);
             socket.off('disconnect', onDisconnect);
+            socket.off('matched', joinGame);
+            socket.off('aborted');
+            socket.off('opponentMove');
+            socket.off('endGame');
             socket.disconnect(); // Ensure to disconnect on cleanup
         };
     }, []);
 
     const updateMove = (board: BoardType | string) => {
-        console.log("reaching updateMove", JSON.stringify(board))
-        if (board !== "solved!") {
-            socket.emit("updateMove", board);
-        } else {
-            console.log("emitted won")
-            socket.emit("gameWon");
+        console.log("reaching updateMove")
+        let changed = false
+        for (let i = 0; i < board.length; i++) {
+            for (let j = 0; j < board.length; j++) {
+                if (board1[i][j] !== board[i][j]) {
+                    changed = true;
+                    break
+                }
+            }
+        }
+        if (changed) {
+            setBoard1(board as BoardType);
+            if (board !== "solved!") {
+                // setBoard1(board as BoardType);
+                if (board)
+                socket.emit("updateMove", board);
+            } else {
+                console.log("emitted won")
+                socket.emit("gameWon");
+            }
         }
     }
     return (
@@ -81,8 +101,8 @@ const Multiplayer = () => {
         <div>
             {game}
         <div className="flex flex-lg-row flex-col lg:flex-row m-4">
-            <Board InputBoard={board1} cellColor={cellColor} onBoardUpdate={updateMove} mode="duel"/>
-            <Board InputBoard={board2} cellColor={cellColor} onBoardUpdate={updateMove} mode="duel"/>
+            <Board key={1} InputBoard={board1} cellColor={cellColor} onBoardUpdate={updateMove} mode="duel"/>
+            <Board key={2} InputBoard={board2} cellColor={cellColor} onBoardUpdate={updateMove} mode="duel"/>
         </div></div>: 
         winner === "1" ? <div>You won!</div> : <div>Opponent won</div>
         :
