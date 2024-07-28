@@ -73,24 +73,24 @@ const Multiplayer = () => {
 
     const updateMove = (board: BoardType | string) => {
         console.log("reaching updateMove")
-        let changed = false
-        for (let i = 0; i < board.length; i++) {
-            for (let j = 0; j < board.length; j++) {
-                if (board1[i][j] !== board[i][j]) {
-                    changed = true;
-                    break
+        if (board === "solved!") {
+            console.log("emitted won")
+            socket.emit("gameWon");
+        }
+        else {
+            let changed = false
+            for (let i = 0; i < board.length; i++) {
+                for (let j = 0; j < board.length; j++) {
+                    if (board1[i][j] !== board[i][j]) {
+                        changed = true;
+                        break
+                    }
                 }
             }
-        }
-        if (changed) {
-            setBoard1(board as BoardType);
-            if (board !== "solved!") {
-                // setBoard1(board as BoardType);
-                if (board)
+            if (changed) {
+                setBoard1(board as BoardType);
+                console.log("op move")
                 socket.emit("updateMove", board);
-            } else {
-                console.log("emitted won")
-                socket.emit("gameWon");
             }
         }
     }
@@ -102,7 +102,7 @@ const Multiplayer = () => {
             {game}
         <div className="flex flex-lg-row flex-col lg:flex-row m-4">
             <Board key={1} InputBoard={board1} cellColor={cellColor} onBoardUpdate={updateMove} mode="duel"/>
-            <Board key={2} InputBoard={board2} cellColor={cellColor} onBoardUpdate={updateMove} mode="duel"/>
+            <Board key={2} InputBoard={board2} cellColor={cellColor}  mode="duel"/>
         </div></div>: 
         winner === "1" ? <div>You won!</div> : <div>Opponent won</div>
         :

@@ -15,16 +15,18 @@ const Board: React.FC<BoardProps> = ( { InputBoard, cellColor, onBoardUpdate = (
     console.log("rerendering")
     const updateBoard = setTimeout(() => {
       if (board.length !== 0) {
-        if (isSolved()) {
+        let solved = isSolved()
+        console.log(board, solved)
+        if (solved === true) {
           onBoardUpdate("solved!");
         } else {
           onBoardUpdate(board);
         }
       }
-    }, 2000)
+    }, 100)
 
     return () => clearTimeout(updateBoard);
-  }, [board]);
+  }, [flow]);
 
   useEffect(() => {
     updateFlow()
