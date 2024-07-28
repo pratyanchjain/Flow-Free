@@ -1,10 +1,6 @@
 "use client"
-import { useState, useEffect} from "react";
-import axios from 'axios';
-import { useRouter } from "next/navigation";
-import getBoard from "../../pages/api/getBoard";
-import { on } from "stream";
-import { json } from "stream/consumers";
+import { useState, useEffect, useCallback} from "react";
+import React from "react";
 
 const Board: React.FC<BoardProps> = ( { InputBoard, cellColor, onBoardUpdate = () => {}, mode}) => {
   const [board, setBoard] = useState<BoardType>([]);
@@ -14,59 +10,48 @@ const Board: React.FC<BoardProps> = ( { InputBoard, cellColor, onBoardUpdate = (
   const [flow, setFlow] = useState<BoardType>([]);
   const [endPoint, setEndPoint] = useState<BoardType>([]);
   const [boardSize, setBoardSize] = useState<number>(9);
-  const [showAnimation, setShowAnimation] = useState(false);
-  const router = useRouter();
-
 
   useEffect(() => {
-    if (mode == '') {
-      console.log("board setup  being called")
+    console.log("rerendering child")
+    if (mode === '') {
       boardSetup();
-      console.log(InputBoard)
+    }
+    if (mode === 'solution') {
+      flowSetup(InputBoard);
+    }
+    if (mode === "duel") {
+      console.log("mode", mode)
+      console.log(board, endPoint)
+      boardSetup()
+      // if (endPoint.length === 0) {
+      //   boardSetup()
+      // }
+      // if (endPoint.length !== 0) {
+      //   flowSetup(InputBoard);
+      // }
     }
   }, [InputBoard])
 
-  // useEffect(() => {
-  //   if (mode === 'solution') {
-  //     flowSetup(InputBoard);
-  //   }
-  // }, [InputBoard])
-
   useEffect(() => {
-    if (mode !== "") {
-      console.log(endPoint);
-      if (endPoint.length === 0) {
-        console.log("board setup  being called")
-        boardSetup()
-      }
-      if (endPoint.length !== 0) {
-        console.log("flow setup  being called")
-        flowSetup(InputBoard);
-        console.log(InputBoard)
-      }
-    }
-  }, [InputBoard])
- 
-  useEffect(() => {
-    console.log("issolve", JSON.stringify(board))
     if (isSolved()) {
       onBoardUpdate("solved!");
-      console.log("solved! from effect")
     }
   }, [board, flow]);
 
-
+  useEffect(() => {
+    updateFlow()
+  }, [flow])
 
   const boardSetup = () => {
+    console.log("safa", InputBoard, board, endPoint)
+    console.log("safa", JSON.stringify(InputBoard), JSON.stringify(board), JSON.stringify(endPoint));
     setBoard(InputBoard);
-    console.log("input is ", InputBoard)
     const initialFlow: BoardType = Array.from({ length: InputBoard.length + 1 }, () => []);
     setFlow(initialFlow);
-    let updatedBoard: BoardType = InputBoard;
-    setEndPoint(updatedBoard.map(row => [...row]))
-    console.log("st to", updatedBoard)
+    setEndPoint(InputBoard)
     setBoardSize(InputBoard.length);
   }
+
 
   useEffect(() => {
     if (draggingOver) {
@@ -76,16 +61,14 @@ const Board: React.FC<BoardProps> = ( { InputBoard, cellColor, onBoardUpdate = (
 
       return () => {
         setDraggingOver(true);
-        console.log(`clearing interval`);
         clearInterval(interval);
       };
     }
   }, [])
 
   const flowSetup = (solvedBoard: BoardType) => {
-    setBoard(solvedBoard);
-    console.log("before", flow)
-    console.log("ep", endPoint)
+    console.log("flow setup", solvedBoard)
+    setBoard(solvedBoard);    
     let solvedFlow: BoardType = Array.from({ length: solvedBoard.length + 1 }, () => []);
     for (let i = 0; i < solvedBoard.length; i++) {
       for (let j = 0; j < solvedBoard.length; j++) {
@@ -115,7 +98,6 @@ const Board: React.FC<BoardProps> = ( { InputBoard, cellColor, onBoardUpdate = (
       }
     }
     setFlow(solvedFlow);
-    console.log("after", solvedFlow)
   }
 
 type Coordinate = [number, number];
@@ -147,26 +129,24 @@ const getValidNeighbors = (x: number, y: number, numRows: number, numCols: numbe
 
   const handleOnDrag = (e: React.DragEvent, cell: number) => {
     let val = boardValue(board, cell)
-    console.log("val", val)
-    console.log(board);
+    let updatedFlow = flow.map(row=> [...row])
     if (val) {
       setCurrCell(cell);
       setChosenFlow(val)
       setDraggingOver(true);
-      if (boardValue(endPoint, cell) === val) {
-        flow[val] = [];
+      // if (boardValue(endPoint, cell) === val) {
+      //   updatedFlow[val] = [];
+      // }
+      if (boardValue(endPoint, cell)) {
+        updatedFlow[val] = [];
       }
-      console.log(flow[val])
-      if (flow[val].includes(cell)) {
-        console.log("before", flow[val])
-        flow[val].splice(flow[val].indexOf(cell) + 1, flow[val].length);
-        console.log("after", flow[val])
+      let cellIndex = updatedFlow[val].indexOf(cell)
+      if (cellIndex !== -1) {
+        updatedFlow[val] = updatedFlow[val].slice(0, cellIndex + 1);
       } else {
-        console.log("pushing")
-        flow[val].push(cell);
+        updatedFlow[val].push(cell);
       }
-      updateFlow()
-      console.log("chosen flow is", val)
+      setFlow(updatedFlow.map(row=>[...row]))
     }
   }
 
@@ -176,10 +156,10 @@ const getValidNeighbors = (x: number, y: number, numRows: number, numCols: numbe
     let updatedFlow = flow.map(row=> [...row])
     if (currCell !== -1 && chosenFlow !== -1) {
       if (isNeighbour(idx, currCell, board.length)) {
-        if (boardValue(board, idx) === 0) {
+        if (boardValue(board, idx) === 0 && !flowComplete()) {
+          updatedFlow[chosenFlow].push(idx)
           setCurrCell(idx);
           updateCellColor(idx)
-          updatedFlow[chosenFlow].push(idx)
         }
         else {
           if (boardValue(board, idx) === chosenFlow) {
@@ -202,7 +182,6 @@ const getValidNeighbors = (x: number, y: number, numRows: number, numCols: numbe
               }
             }
             setCurrCell(idx);
-            updateFlow();
           }
         }
       }
@@ -238,7 +217,6 @@ const getValidNeighbors = (x: number, y: number, numRows: number, numCols: numbe
       }
     }
     setBoard(updatedBoard.map(row => [...row]));
-    console.log("set to ", JSON.stringify(updatedBoard))
   }
 
   
@@ -295,6 +273,14 @@ const getValidNeighbors = (x: number, y: number, numRows: number, numCols: numbe
     return {connector,  val};
   }
 
+  const isEnd = (idx: number) => {
+    const value = boardValue(board, idx);
+    const flowArray = flow[value];
+    const flowIndex = flowArray.indexOf(idx);
+    const connector = flowIndex !== -1 && flowIndex === flowArray.length - 1 && flowArray.length > 1;
+    return connector || (boardValue(endPoint, idx) !== 0);
+  }
+
   const getBackgroundClass = (idx: number) => {
     const {connector, val} = isConnector(idx);
     const value = boardValue(board, idx);
@@ -322,7 +308,7 @@ const getValidNeighbors = (x: number, y: number, numRows: number, numCols: numbe
           dir = 'Left';
           break
       }
-      let size = getCellSize()
+      let size = getCellSize(-1)
       let obj = { backgroundColor: cellColor[cell],
         width: `${size/4}px`, height: `${size + 0.25}px`,
         [`margin${dir}`] : `${size * 0.75}px`,
@@ -331,28 +317,39 @@ const getValidNeighbors = (x: number, y: number, numRows: number, numCols: numbe
     }
     return {}
   }
-  const getCellSize = () => {
+  const getCellSize = (index: number) => {
     let containerSize = Math.min(window.innerHeight, window.innerWidth) * 0.75;
-    return containerSize / boardSize;
+    let size = containerSize / boardSize;
+    let isEndPoint = false;
+    if (index !== -1) {
+      isEndPoint = !(boardValue(endPoint, index) === 0);
+      let val = boardValue(board, index)
+      let idx = flow[val].indexOf(index)
+      let isLast = (idx === flow[val].length - 1) && (idx !== -1);
+      if (!isEndPoint && isLast) {
+        return size / 1.75;
+      }
+    }
+
+    if (isEndPoint) {
+      return size/1.5;
+    }
+    return size;
   }
 
   const isSolved = () => {
-    console.log(JSON.stringify(board), board)
     if (board.length === 0) {
-      console.log("false", flow)
       return false;
     }
     for (let i = 0; i < boardSize; i++) {
       for (let j = 0; j < boardSize; j++) {
         if (board[i][j] === 0) {
-          console.log("false")
           return false;
         }
       }
     }
     let flowCopy = flow.map(row => [...row])
     flowCopy.shift()
-    console.log("flowCopy", JSON.stringify(flowCopy))
     for (const color of flowCopy) {
       let cnt = 0;
       for (const index of color) {
@@ -361,12 +358,20 @@ const getValidNeighbors = (x: number, y: number, numRows: number, numCols: numbe
         }
       }
       if (cnt < 2) {
-        console.log("false", JSON.stringify(flow), color, flow)
         return false;
       }
     }
-    console.log("solved!")
     return true;
+  }
+
+  const flowComplete = () => {
+    let cnt = 0
+    for (const color of flow[chosenFlow]) {
+      if (boardValue(endPoint, color)) {
+        cnt += 1
+      }
+    }
+    return cnt === 2;
   }
 
   return (
@@ -380,39 +385,35 @@ const getValidNeighbors = (x: number, y: number, numRows: number, numCols: numbe
     } */}
     <div className="text-center p-5 m-5">
     <div className="board grid" style={{ gridTemplateColumns: `repeat(${boardSize}, 1fr)`, gridTemplateRows: `repeat(${boardSize}, 1fr)` }} >
-      {board.flat().map((cell, idx) => (
-        <>
+      {board.flat().map((cell, index) => (
+        <React.Fragment key={index}>
         <div
-          key={idx}
-          onDragStart={(e) => handleOnDrag(e, idx)}
-          onDragOver={(e) => handleOnDragOver(e, idx)}
-          onDrop={handleDrop}
-          style = {{width: `${getCellSize()}px`, height: `${getCellSize()}px`}}
+          style = {{width: `${getCellSize(-1)}px`, height: `${getCellSize(-1)}px`}}
           className="boardCell flex justify-center items-center"
         >
-        {isConnector(idx) && 
+        {isConnector(index) && 
        <div
-       draggable className={`${getConnector(idx)}`}
-        style={getConnectorStyle(cell, idx)}
+       draggable className={`${getConnector(index)}`}
+        style={getConnectorStyle(cell, index)}
         ></div>
       }
 
         <button           
           draggable
+          onDragStart={(e) => handleOnDrag(e, index)}
+          onDragOver={(e) => handleOnDragOver(e, index)}
+          onDrop={handleDrop}
           style= { {
-            ...getBackgroundClass(idx),
-           width: `${getCellSize() / 1.5}px`, height: `${getCellSize() / 1.5}px`
+            ...getBackgroundClass(index),
+           width: `${getCellSize(index)}px`, 
+           height: `${getCellSize(index)}px`
           }}
           className={`flex justify-center item-center 
-          ${
-            boardValue(endPoint, idx) ? "circle" : ""}
-          ${boardValue(endPoint, idx) === 0 && flow[boardValue(board, idx)].indexOf(idx) === flow[boardValue(board, idx)].length - 1
-            ? "smaller-circle" : ""
-          }`}>
-          {cell ? cell : ""}
+          ${isEnd(index) ? "circle" : ""}`}>
+          {isEnd(index) ? cell : ""}
           </button>
         </div>
-        </>
+        </React.Fragment>
       ))}
     </div>
     </div>

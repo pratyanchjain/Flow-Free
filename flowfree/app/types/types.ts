@@ -1,8 +1,15 @@
 type BoardType = number[][];
 
+type CellType = Cell[];
+
 type cellColorType = {
     [key: number]: string;
 } 
+
+type Cell = {
+    Value: number,
+    Id: number
+}
 
 interface BoardProps {
     InputBoard: BoardType;

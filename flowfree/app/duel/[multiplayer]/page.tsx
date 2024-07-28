@@ -4,7 +4,7 @@ import Board from "../../components/board"
 import { socket } from '../../socket';
 import { useRouter, usePathname } from "next/navigation";
 
-export default function Multiplayer() {
+const Multiplayer = () => {
     const [board1, setBoard1] = useState<BoardType>([])
     const [board2, setBoard2] = useState<BoardType>([])
     const [isConnected, setIsConnected] = useState(socket.connected);
@@ -15,20 +15,26 @@ export default function Multiplayer() {
     const [winner, setWinner] = useState('');
 
     useEffect(() => {
+        console.log("rerendering")
+        console.log(board1, board2)
+        console.log(JSON.stringify(board1), JSON.stringify(board2))
+    }, [board1, board2])
+
+    useEffect(() => {
         socket.connect(); // Manually connect
 
-        function onConnect() {
+        const onConnect = () => {
             setIsConnected(true);
             if (!path?.includes("game")) {
                 socket.emit("joinQueue");
             }
         }
 
-        function onDisconnect() {
+        const onDisconnect = () => {
             setIsConnected(false);
         }
 
-        function joinGame(response: GameData) {
+        const joinGame = (response: GameData) => {
             console.log("client", response);
             setGame(response.Game);
             setCellColor(response.Color)
@@ -36,7 +42,7 @@ export default function Multiplayer() {
             setBoard2(response.Board)
         }
 
-        function endGame(response: string) {
+        const endGame = (response: string) => {
             if (response === "you won") {
                 setWinner("1")
             }
@@ -72,10 +78,12 @@ export default function Multiplayer() {
         <>
         {game !== '' ? 
         winner === '' ?
+        <div>
+            {game}
         <div className="flex flex-lg-row flex-col lg:flex-row m-4">
             <Board InputBoard={board1} cellColor={cellColor} onBoardUpdate={updateMove} mode="duel"/>
             <Board InputBoard={board2} cellColor={cellColor} onBoardUpdate={updateMove} mode="duel"/>
-        </div> : 
+        </div></div>: 
         winner === "1" ? <div>You won!</div> : <div>Opponent won</div>
         :
             `joined : ${game}` 
@@ -83,3 +91,5 @@ export default function Multiplayer() {
         </>
     )
 }
+
+export default Multiplayer;

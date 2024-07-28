@@ -22,13 +22,11 @@ export default function Practice() {
       return;
     }
     axios.post("http://localhost:3003/puzzle/", {size: boardInput}).then((response) => {
-      console.log(response);
       if (response.data === "Invalid Input") {
         console.log("error!");
         return;
       }
       setBoard(response.data);
-      console.log("setting board to", response.data)
       setCellColor(generateColors(response.data.length));
       setMode('')
     })

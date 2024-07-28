@@ -79,7 +79,7 @@ function generateColors(boardSize) {
     for (let i = 0; i <= boardSize; i++) {
         cellColors[i] = getRandomColor();
     }
-    cellColors[0] = "#000000";
+    cellColors[0] = "";
     return cellColors;
 }
 
