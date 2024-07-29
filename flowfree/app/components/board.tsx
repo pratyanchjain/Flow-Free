@@ -17,10 +17,9 @@ const Board: React.FC<BoardProps> = ( { InputBoard, cellColor, onBoardUpdate = (
       if (board.length !== 0) {
         let solved = isSolved()
         console.log(board, solved)
+        onBoardUpdate(board);
         if (solved === true) {
           onBoardUpdate("solved!");
-        } else {
-          onBoardUpdate(board);
         }
       }
     }, 100)

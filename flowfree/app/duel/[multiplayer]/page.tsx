@@ -3,6 +3,7 @@ import {useEffect, useState, useRef} from "react"
 import Board from "../../components/board"
 import { socket } from '../../socket';
 import { useRouter, usePathname } from "next/navigation";
+import Stopwatch from "@/app/components/Stopwatch";
 
 const Multiplayer = () => {
     const [board1, setBoard1] = useState<BoardType>([])
@@ -13,11 +14,6 @@ const Multiplayer = () => {
     const router = useRouter()
     const path = usePathname()
     const [winner, setWinner] = useState('');
-
-    useEffect(() => {
-        console.log("rerendering")
-        console.log(board1, board2)
-    }, [board1, board2])
 
     useEffect(() => {
         socket.connect(); // Manually connect
@@ -97,14 +93,20 @@ const Multiplayer = () => {
     return (
         <>
         {game !== '' ? 
-        winner === '' ?
         <div>
-            {game}
-        <div className="flex flex-lg-row flex-col lg:flex-row m-4">
-            <Board key={1} InputBoard={board1} cellColor={cellColor} onBoardUpdate={updateMove} mode="duel"/>
+            {/* <h1 className="text-left">{game}</h1> */}
+            <div className="text-center flex"><Stopwatch isActive={winner===''}/></div>
+            {winner !== '' ? winner === "1" ? <div>You won!</div> : <div>Opponent won</div>: <div></div> }
+        <div className="flex flex-lg-row flex-col lg:flex-row m-4 text-center">
+            <div className="flex flex-col">
+                <h3>You</h3>
+                <Board key={1} InputBoard={board1} cellColor={cellColor} onBoardUpdate={updateMove} mode="duel"/>
+            </div>
+            <div className="flex flex-col">
+                <h3>Opponent</h3>
             <Board key={2} InputBoard={board2} cellColor={cellColor}  mode="duel"/>
-        </div></div>: 
-        winner === "1" ? <div>You won!</div> : <div>Opponent won</div>
+            </div>
+        </div></div>        
         :
             `joined : ${game}` 
         }

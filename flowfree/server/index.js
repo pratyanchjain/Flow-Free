@@ -10,7 +10,8 @@ const io = new Server(server, {
     },
   });
 
-const getBoard = require('../pages/api/getBoard')
+const getBoard = require('../pages/api/getBoard');
+const { randomInt } = require('crypto');
 
 app.use(cors());
 
@@ -41,7 +42,7 @@ io.on('connection', (socket) => {
             myMap[player2] = player1
             let gameId = generateGameID();
             try {
-                let board = await getBoard(5);
+                let board = await getBoard(Math.floor(Math.random() * 10) + 4);
                 let cellColor = generateColors(board.length)
                 io.to(player1).emit("matched", {Game: gameId, Board: board, Color:  cellColor})
                 io.to(player2).emit("matched", {Game: gameId, Board: board, Color:  cellColor })
