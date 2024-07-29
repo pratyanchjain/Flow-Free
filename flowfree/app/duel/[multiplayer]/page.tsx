@@ -4,7 +4,7 @@ import Board from "../../components/board"
 import { socket } from '../../socket';
 import { useRouter, usePathname } from "next/navigation";
 import Stopwatch from "@/app/components/Stopwatch";
-
+import { Modal, ModalBody,ModalHeader, ModalContent, ModalFooter, Button, useDisclosure } from "@nextui-org/react";
 const Multiplayer = () => {
     const [board1, setBoard1] = useState<BoardType>([])
     const [board2, setBoard2] = useState<BoardType>([])
@@ -13,6 +13,7 @@ const Multiplayer = () => {
     const [game, setGame] = useState('')
     const router = useRouter()
     const path = usePathname()
+    const {isOpen, onOpen, onOpenChange} = useDisclosure();
     const [winner, setWinner] = useState('');
 
     useEffect(() => {
@@ -44,6 +45,7 @@ const Multiplayer = () => {
             else {
                 setWinner("2")
             }
+            onOpen();
         }
 
         socket.on('connect', onConnect);
@@ -93,10 +95,41 @@ const Multiplayer = () => {
     return (
         <>
         {game !== '' ? 
-        <div>
+        <div className="h-full">
             {/* <h1 className="text-left">{game}</h1> */}
             <div className="text-center flex"><Stopwatch isActive={winner===''}/></div>
-            {winner !== '' ? winner === "1" ? <div>You won!</div> : <div>Opponent won</div>: <div></div> }
+            {winner !== '' ?
+            <Modal backdrop={"opaque"} 
+            classNames={{
+                body: "py-6",
+                backdrop: "bg-[#000000]/50 backdrop-opacity-40",
+                base: "border-[#000000] bg-[#000000] dark:bg-[#000000] text-[#FFFFFF]",
+                header: "border-b-[1px] border-[#000000]",
+                footer: "border-t-[1px] border-[#000000]",
+                closeButton: "hover:bg-white/5 active:bg-white/10",
+              }}
+              isOpen={isOpen} onOpenChange={onOpenChange}>
+            <ModalContent>
+              {(onClose) => (
+                <>
+                  <ModalHeader className="flex flex-col gap-1">Modal Title</ModalHeader>
+                  <ModalBody>
+                    {winner === "1" ? "You won!": "You lost"}
+                    <Button>Play Again</Button>
+                  </ModalBody>
+                  <ModalFooter>
+                    <Button color="danger" variant="light" onPress={onClose}>
+                      Close
+                    </Button>
+                    <Button color="primary" onPress={onClose}>
+                      Action
+                    </Button>
+                  </ModalFooter>
+                </>
+              )}
+            </ModalContent>
+          </Modal>
+            : <div></div> }
         <div className="flex flex-lg-row flex-col lg:flex-row m-4 text-center">
             <div className="flex flex-col">
                 <h3>You</h3>
