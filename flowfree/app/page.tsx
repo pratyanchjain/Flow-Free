@@ -8,7 +8,7 @@ export default function App() {
     <>
     <div className="h-full text-center align-items-center gap-4">
       <button className="bg-white rounded text-black px-4" onClick={() => router.push('/practice')}>Practice</button>
-      <button className="bg-white rounded text-black px-4" onClick={() => router.push('/duel/lobby')}>Multiplayer</button>
+      <button className="bg-white rounded text-black px-4" onClick={() => router.push('/duel/')}>Multiplayer</button>
     </div>
     </>
   )

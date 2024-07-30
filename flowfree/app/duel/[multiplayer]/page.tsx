@@ -1,43 +1,47 @@
 "use client"
-import {useEffect, useState, useRef} from "react"
+import {useEffect, useState,useContext} from "react"
 import Board from "../../components/board"
-import { socket } from '../../socket';
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname } from "next/navigation";
 import Stopwatch from "@/app/components/Stopwatch";
-import { Modal, ModalBody,ModalHeader, ModalContent, ModalFooter, Button, useDisclosure } from "@nextui-org/react";
-const Multiplayer = () => {
-    const [board1, setBoard1] = useState<BoardType>([])
-    const [board2, setBoard2] = useState<BoardType>([])
-    const [isConnected, setIsConnected] = useState(socket.connected);
-    const [cellColor, setCellColor] = useState<cellColorType>({});
-    const [game, setGame] = useState('')
-    const router = useRouter()
+import { Modal, ModalBody,ModalHeader, ModalContent, ModalFooter, Button, useDisclosure, user } from "@nextui-org/react";
+import useStore  from "../../Zustand/useStore";
+import {useRouter} from "next/navigation";
+import { socket } from "../../../socket";
+
+const Multiplayer: React.FC<MultiplayerProps> = () => {
+    const [board1, setBoard1] = useState<BoardType>(useStore((state) => state.board))
+    const [board2, setBoard2] = useState<BoardType>(useStore((state) => state.board))
+    const game = usePathname()
+    const [cellColor, setCellColor] = useState<cellColorType>(useStore((state) => state.cellColor))
     const path = usePathname()
     const {isOpen, onOpen, onOpenChange} = useDisclosure();
     const [winner, setWinner] = useState('');
+    const router = useRouter()
+
+  const [isConnected, setIsConnected] = useState(false);
+  const [transport, setTransport] = useState("N/A");
 
     useEffect(() => {
-        socket.connect(); // Manually connect
-
-        const onConnect = () => {
+        if (socket.connected) {
+            onConnect();
+            console.log("emitting playerID")
+            socket.emit("playerID", game)
+        }
+    
+        function onConnect() {
             setIsConnected(true);
-            if (!path?.includes("game")) {
-                socket.emit("joinQueue");
-            }
+            setTransport(socket.io.engine.transport.name);
+        
+            socket.io.engine.on("upgrade", (transport) => {
+                setTransport(transport.name);
+            });
         }
 
-        const onDisconnect = () => {
+        function onDisconnect() {
             setIsConnected(false);
+            setTransport("N/A");
         }
-
-        const joinGame = (response: GameData) => {
-            console.log("client", response);
-            setGame(response.Game);
-            setCellColor(response.Color)
-            setBoard1(response.Board);
-            setBoard2(response.Board)
-        }
-
+      
         const endGame = (response: string) => {
             if (response === "you won") {
                 setWinner("1")
@@ -48,29 +52,26 @@ const Multiplayer = () => {
             onOpen();
         }
 
+        const opMove = (response: BoardType) => {
+            console.log("response from op move", response);
+            setBoard2(response);
+        }
+
         socket.on('connect', onConnect);
         socket.on('disconnect', onDisconnect);
-        socket.on('matched', (response:  GameData) => joinGame(response))
-        socket.on('aborted', () => setGame(''))
-        socket.on('opponentMove', (response: BoardType) => {
-            console.log("response from op move", response);
-            setBoard2(response)
-        })
+        socket.on('opponentMove', opMove)
         socket.on('endGame', (response: string) => endGame(response));
 
         return () => {
             socket.off('connect', onConnect);
             socket.off('disconnect', onDisconnect);
-            socket.off('matched', joinGame);
-            socket.off('aborted');
-            socket.off('opponentMove');
+            socket.off('opponentMove', opMove);
             socket.off('endGame');
-            socket.disconnect(); // Ensure to disconnect on cleanup
         };
     }, []);
 
     const updateMove = (board: BoardType | string) => {
-        console.log("reaching updateMove")
+        console.log("reaching updateMove", board)
         if (board === "solved!") {
             console.log("emitted won")
             socket.emit("gameWon");
@@ -87,7 +88,7 @@ const Multiplayer = () => {
             }
             if (changed) {
                 setBoard1(board as BoardType);
-                console.log("op move")
+                console.log("op move", board)
                 socket.emit("updateMove", board);
             }
         }
@@ -96,6 +97,10 @@ const Multiplayer = () => {
         <>
         {game !== '' ? 
         <div className="h-full">
+            <div>
+      <p>Status: { isConnected ? "connected" : "disconnected" }</p>
+      <p>Transport: { transport }</p>
+    </div>
             {/* <h1 className="text-left">{game}</h1> */}
             <div className="text-center flex"><Stopwatch isActive={winner===''}/></div>
             {winner !== '' ?
@@ -112,18 +117,15 @@ const Multiplayer = () => {
             <ModalContent>
               {(onClose) => (
                 <>
-                  <ModalHeader className="flex flex-col gap-1">Modal Title</ModalHeader>
+                  <ModalHeader className="flex flex-col gap-1">Game Over</ModalHeader>
                   <ModalBody>
                     {winner === "1" ? "You won!": "You lost"}
-                    <Button>Play Again</Button>
                   </ModalBody>
-                  <ModalFooter>
+                  <ModalFooter className="w-full">
                     <Button color="danger" variant="light" onPress={onClose}>
                       Close
                     </Button>
-                    <Button color="primary" onPress={onClose}>
-                      Action
-                    </Button>
+                    <Button onClick={() => router.push("/duel/")}>Play Again</Button>
                   </ModalFooter>
                 </>
               )}
