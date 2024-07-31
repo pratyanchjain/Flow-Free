@@ -7,13 +7,20 @@ import { socket } from "../../socket";
 
 const Lobby = () => {
   const router = useRouter(); 
-  const updateBoard = useStore((state) => state.updateBoard)
+  const updateBoard1 = useStore((state) => state.updateBoard1)
+  const updateBoard2 = useStore((state) => state.updateBoard2)
   const updateColor = useStore((state) => state.updateColor)
 
   const [isConnected, setIsConnected] = useState(false);
   const [transport, setTransport] = useState("N/A");
 
   useEffect(() => {
+    let userId = localStorage.getItem('userId');
+    if (!userId) {
+      userId = (Math.random() * 1000).toString();
+      localStorage.setItem('userId', userId);
+    }
+
     if (socket.connected) {
       onConnect();
     }
@@ -26,7 +33,7 @@ const Lobby = () => {
         setTransport(transport.name);
       });
 
-      socket.emit("joinQueue")
+      socket.emit("joinQueue", userId)
     }
 
     function onDisconnect() {
@@ -36,7 +43,8 @@ const Lobby = () => {
 
     function joinGame(response: GameData) {
       console.log("client", response);
-      updateBoard(response.Board)
+      updateBoard1(response.Board)
+      updateBoard2(response.Board)
       updateColor(response.Color)
       console.log("updating")
       router.push(`/duel/${response.Game}`)

@@ -32,6 +32,7 @@ const Board: React.FC<BoardProps> = ( { InputBoard, cellColor, onBoardUpdate = (
   }, [flow])
 
   const boardSetup = () => {
+    console.log("board setup", endPoint)
     setBoard(InputBoard);
     const initialFlow: BoardType = Array.from({ length: InputBoard.length + 1 }, () => []);
     setFlow(initialFlow);
@@ -54,6 +55,7 @@ const Board: React.FC<BoardProps> = ( { InputBoard, cellColor, onBoardUpdate = (
   }, [])
 
   const flowSetup = (solvedBoard: BoardType) => {
+    console.log("flow setup", endPoint, InputBoard)
     setBoard(solvedBoard);    
     let solvedFlow: BoardType = Array.from({ length: solvedBoard.length + 1 }, () => []);
     for (let i = 0; i < solvedBoard.length; i++) {

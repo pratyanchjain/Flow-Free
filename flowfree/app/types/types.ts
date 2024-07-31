@@ -32,8 +32,10 @@ interface MultiplayerProps {
 }
 
 interface StoreState {
-    board: BoardType;
-    updateBoard: (newBoard: BoardType) => void;
+    board1: BoardType;
+    board2: BoardType;
+    updateBoard1: (newBoard: BoardType) => void;
+    updateBoard2: (newBoard: BoardType) => void;
     cellColor: cellColorType;
     updateColor: (newColor: cellColorType) => void;
 }

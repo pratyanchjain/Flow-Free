@@ -9,23 +9,38 @@ import {useRouter} from "next/navigation";
 import { socket } from "../../../socket";
 
 const Multiplayer: React.FC<MultiplayerProps> = () => {
-    const [board1, setBoard1] = useState<BoardType>(useStore((state) => state.board))
-    const [board2, setBoard2] = useState<BoardType>(useStore((state) => state.board))
+    const [board1, setBoard1] = useState<BoardType>(useStore((state) => state.board1))
+    const [board2, setBoard2] = useState<BoardType>(useStore((state) => state.board2))
     const game = usePathname()
     const [cellColor, setCellColor] = useState<cellColorType>(useStore((state) => state.cellColor))
     const path = usePathname()
     const {isOpen, onOpen, onOpenChange} = useDisclosure();
     const [winner, setWinner] = useState('');
     const router = useRouter()
-
-  const [isConnected, setIsConnected] = useState(false);
-  const [transport, setTransport] = useState("N/A");
+    const updateBoard1 = useStore((state) => state.updateBoard1)
+    const updateBoard2 = useStore((state) => state.updateBoard2)
+    const [userId, setUserId] = useState('');
+    const [isConnected, setIsConnected] = useState(false);
+    const [transport, setTransport] = useState("N/A");
+    useEffect(() => {
+        let user = localStorage.getItem('userId');
+        if (!user) {
+          user = (Math.random() * 1000).toString();
+          localStorage.setItem('userId', user);
+        }
+        console.log("user Id is", user);
+        setUserId(user);
+    }, [])
 
     useEffect(() => {
+        if (userId !== "") {
+            socket.emit("userID", userId, socket.id)
+        }
+
         if (socket.connected) {
             onConnect();
             console.log("emitting playerID")
-            socket.emit("playerID", game)
+            socket.emit("playerID", game, userId)
         }
     
         function onConnect() {
@@ -35,6 +50,7 @@ const Multiplayer: React.FC<MultiplayerProps> = () => {
             socket.io.engine.on("upgrade", (transport) => {
                 setTransport(transport.name);
             });
+
         }
 
         function onDisconnect() {
@@ -55,6 +71,8 @@ const Multiplayer: React.FC<MultiplayerProps> = () => {
         const opMove = (response: BoardType) => {
             console.log("response from op move", response);
             setBoard2(response);
+            updateBoard2(response)
+
         }
 
         socket.on('connect', onConnect);
@@ -68,13 +86,13 @@ const Multiplayer: React.FC<MultiplayerProps> = () => {
             socket.off('opponentMove', opMove);
             socket.off('endGame');
         };
-    }, []);
+    }, [userId]);
 
     const updateMove = (board: BoardType | string) => {
         console.log("reaching updateMove", board)
         if (board === "solved!") {
             console.log("emitted won")
-            socket.emit("gameWon");
+            socket.emit("gameWon", userId);
         }
         else {
             let changed = false
@@ -88,8 +106,9 @@ const Multiplayer: React.FC<MultiplayerProps> = () => {
             }
             if (changed) {
                 setBoard1(board as BoardType);
+                updateBoard1(board as BoardType)
                 console.log("op move", board)
-                socket.emit("updateMove", board);
+                socket.emit("updateMove", board, userId);
             }
         }
     }

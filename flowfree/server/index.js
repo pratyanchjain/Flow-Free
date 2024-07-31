@@ -19,6 +19,7 @@ const port = 3004;
 let queue = [];
 let myMap = new Map();
 let playerMap = new Map();
+let socketMap = new Map();
 
 app.get('/api', (req, res) => {
     res.send('Hello World!');
@@ -30,16 +31,33 @@ app.get('/api/duel', (req, res) => {
 });
 
 io.on('connection', (socket) => {
-    console.log('a user connected');
-
+    console.log('a user connected', socket.id);
+    socket.on('userID', (userId) => {
+        console.log("user Id", userId, socketMap.get(userId), socket.id)
+        console.log(playerMap)
+        myMap.forEach((key, value) => {
+            if (value === socketMap.get(userId)) {
+                myMap.set(key, socket.id)
+                console.log("found")
+            }
+        })
+        let oldSocket = socketMap.get(userId)
+        let oldSocketMatch = playerMap.get(oldSocket);
+        console.log("oldSocket", oldSocket, "oldSocketMatch", oldSocketMatch);
+        playerMap.delete(oldSocket);
+        playerMap.set(socket.id, oldSocketMatch);
+        socketMap.set(userId, socket.id);
+        console.log(socketMap, playerMap, myMap)
+    })
     socket.on('hi', (msg) => {
         // Broadcast the received message to all connected clients
         io.emit('message', msg);
     });
 
-    socket.on('joinQueue', async () => {
-        if (!playerMap.has(socket.id)) {
-            queue.push(socket.id);
+    socket.on('joinQueue', async (userId) => {
+        socketMap.set(userId, socket.id)
+        if (!playerMap.has(userId)) {
+            queue.push(userId);
             console.log(queue);
         }
         if (queue.length >= 2) {
@@ -65,8 +83,9 @@ io.on('connection', (socket) => {
                 let board = await getBoard(4);
                 let cellColor = generateColors(board.length);
                 myMap.set(gameId, null);
-                io.to(player1).emit("matched", {Game: gameId, Board: board, Color: cellColor});
-                io.to(player2).emit("matched", {Game: gameId, Board: board, Color: cellColor});
+                console.log(socketMap, player1, player2)
+                io.to(socketMap.get(player1)).emit("matched", {Game: gameId, Board: board, Color: cellColor});
+                io.to(socketMap.get(player2)).emit("matched", {Game: gameId, Board: board, Color: cellColor});
                 console.log("emitted");
             } catch (error) {
                 console.log("error fetching board", error);
@@ -74,8 +93,9 @@ io.on('connection', (socket) => {
         }
     });
 
-    socket.on("playerID", (gameId) => {
+    socket.on("playerID", (gameId, userId) => {
         console.log("gameId", gameId);
+        socketMap.set(userId, socket.id)
         if (!myMap.get(gameId) || myMap.get(gameId) === socket.id) {
             myMap.set(gameId, socket.id);
         } else {
@@ -84,28 +104,27 @@ io.on('connection', (socket) => {
         }
     });
 
-    socket.on("updateMove", (board) => {
-        io.to(playerMap.get(socket.id)).emit("opponentMove", board);
+    socket.on("updateMove", (board, userId) => {
+        socketMap.set(userId, socket.id);
+        console.log("updating move", userId, socketMap.get(userId))
+        io.to(playerMap.get(socketMap.get(userId))).emit("opponentMove", board);
     });
 
-    socket.on("gameWon", () => {
+    socket.on("gameWon", (userId) => {
         console.log("won the game");
-        io.to(socket.id).emit("endGame", "you won");
-        io.to(playerMap.get(socket.id)).emit("endGame", "opponent won");
-        if (playerMap.has(socket.id)) {
-            playerMap.delete(playerMap.get(socket.id));
-            playerMap.delete(socket.id);
+        socketMap.set(userId, socket.id)
+        io.to(socketMap.get(userId)).emit("endGame", "you won");
+        io.to(playerMap.get(socketMap.get(userId))).emit("endGame", "opponent won");
+        if (playerMap.has(socketMap.get(userId))) {
+            playerMap.delete(playerMap.get(socketMap.get(userId)));
+            playerMap.delete(socketMap.get(userId));
         }
     });
 
-    socket.on('disconnect', () => {
-        queue = queue.filter((num) => num !== socket.id && num !== playerMap.get(socket.id));
+    socket.on('disconnect', (userId) => {
+        socketMap.set(userId, socket.id)
+        queue = queue.filter((num) => num !== socketMap.get(userId) && num !== playerMap.get(socketMap.get(userId)));
         console.log('user disconnected');
-        if (playerMap.has(socket.id)) {
-            io.to(playerMap.get(socket.id)).emit("aborted");
-            playerMap.delete(playerMap.get(socket.id));
-            playerMap.delete(socket.id);
-        }
     });
 });
 
