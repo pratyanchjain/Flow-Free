@@ -14,8 +14,6 @@
 # which means they terminate at the endpoints
 from itertools import combinations
 import pycosat
-from tabulate import tabulate
-import os
 import time
 class Solver():
     def __init__(self, board) -> None:
