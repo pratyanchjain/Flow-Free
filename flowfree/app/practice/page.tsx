@@ -21,7 +21,7 @@ export default function Practice() {
     if (boardInput <= 1) {
       return;
     }
-    axios.post("http://localhost:3003/puzzle/", {size: boardInput}).then((response) => {
+    axios.post("https://flow-free.onrender.com/puzzle/", {size: boardInput}).then((response) => {
       if (response.data === "Invalid Input") {
         console.log("error!");
         return;
@@ -33,7 +33,7 @@ export default function Practice() {
   }
 
   const getSolve = () => {
-    axios.get("http://localhost:3003/solution").then((response) => {
+    axios.get("https://flow-free.onrender.com/solution").then((response) => {
       setBoard(response.data);
       setMode("solution")
     })
