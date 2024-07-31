@@ -7,6 +7,10 @@ app = Flask(__name__)
 CORS(app)
 bd = []
 
+@app.route('/')
+def hello():
+    return "hello"
+
 @app.route('/puzzle/', methods=['GET', 'POST'])
 def board():
     if request.method == 'POST':
