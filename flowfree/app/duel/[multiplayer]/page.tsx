@@ -8,7 +8,7 @@ import useStore  from "../../Zustand/useStore";
 import {useRouter} from "next/navigation";
 import { socket } from "../../../socket";
 
-const Multiplayer: React.FC<MultiplayerProps> = () => {
+const Multiplayer = () => {
     const [board1, setBoard1] = useState<BoardType>(useStore((state) => state.board1))
     const [board2, setBoard2] = useState<BoardType>(useStore((state) => state.board2))
     const game = usePathname()

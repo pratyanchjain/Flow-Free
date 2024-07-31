@@ -21,12 +21,12 @@ let myMap = new Map();
 let playerMap = new Map();
 let socketMap = new Map();
 
-app.get('/api', (req, res) => {
+app.get('/', (req, res) => {
     res.send('Hello World!');
 });
 
 
-app.get('/api/duel', (req, res) => {
+app.get('/duel', (req, res) => {
     res.send('Hello Game!');
 });
 
