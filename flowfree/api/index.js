@@ -10,7 +10,7 @@ const io = new Server(server, {
     },
   });
 
-const getBoard = require('../app/pages/api/getBoard');
+// const getBoard = require('../app/pages/api/getBoard');
 
 app.use(cors());
 
@@ -29,6 +29,9 @@ app.get('/', (req, res) => {
 app.get('/duel', (req, res) => {
     res.send('Hello Game!');
 });
+
+const axios = require('axios')
+
 
 io.on('connection', (socket) => {
     console.log('a user connected', socket.id);
@@ -151,6 +154,14 @@ function getRandomColor() {
     return color;
 };
 
+async function getBoard(boardSize) {
+    try {
+        let response = await axios.post("https://flow-free.onrender.com/puzzle/", {size: boardSize});
+        return response.data;
+    } catch (error) {
+        return error;
+    }
+}
 
 server.listen(port, () => {
     console.log(`Server listening on port ${port}`);
