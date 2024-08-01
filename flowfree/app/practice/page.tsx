@@ -2,7 +2,6 @@
 import { useState, useEffect} from "react";
 import axios from 'axios';
 import { useRouter } from "next/navigation";
-import getBoard from "../pages/api/getBoard";
 import Board from "@/app/components/board";
 import { generateColors } from "../utils/colorGenerator";
 
