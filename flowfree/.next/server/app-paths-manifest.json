@@ -1,7 +1,0 @@
-{
-  "/page": "app/page.js",
-  "/practice/page": "app/practice/page.js",
-  "/duel/page": "app/duel/page.js",
-  "/duel/[multiplayer]/page": "app/duel/[multiplayer]/page.js",
-  "/favicon.ico/route": "app/favicon.ico/route.js"
-}

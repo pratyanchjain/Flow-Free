@@ -126,7 +126,6 @@ const Multiplayer = () => {
 
     return (
         <>
-        <script src="drag-drop-touch.esm.min.js?autoload" type="module"></script>
         {game !== '' ? 
         <div className="h-full p-4">
             <Button variant="bordered" className="text-white" onClick={() => router.push("/")}>Exit</Button>
