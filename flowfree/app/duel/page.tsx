@@ -10,12 +10,12 @@ const Lobby = () => {
   const updateBoard1 = useStore((state) => state.updateBoard1)
   const updateBoard2 = useStore((state) => state.updateBoard2)
   const updateColor = useStore((state) => state.updateColor)
-  const boardSize = localStorage.getItem('boardSize');
+  // const boardSize = localStorage.getItem('boardSize');
   const [isConnected, setIsConnected] = useState(false);
   const [transport, setTransport] = useState("N/A");
 
   useEffect(() => {
-    console.log("boardSize is", boardSize);
+    // console.log("boardSize is", boardSize);
     let userId = localStorage.getItem('userId');
     if (!userId) {
       userId = (Math.random() * 1000).toString();
@@ -34,7 +34,7 @@ const Lobby = () => {
         setTransport(transport.name);
       });
 
-      socket.emit("joinQueue", userId, boardSize);
+      socket.emit("joinQueue", userId, localStorage.getItem('boardSize'));
     }
 
     function onDisconnect() {
