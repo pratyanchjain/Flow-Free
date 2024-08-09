@@ -16,10 +16,11 @@ app.use(cors());
 
 const port = 3004;
 
-let queue = [];
+let queue = new Map()
 let myMap = new Map();
 let playerMap = new Map();
 let socketMap = new Map();
+let Board = new Map()
 
 app.get('/', (req, res) => {
     res.send('Hello World!');
@@ -35,7 +36,7 @@ const axios = require('axios')
 
 io.on('connection', (socket) => {
     console.log('a user connected', socket.id);
-    socket.on('userID', (userId) => {
+    socket.on('userID', (userId, boardSize) => {
         console.log("user Id", userId, socketMap.get(userId), socket.id)
         console.log(playerMap)
         myMap.forEach((key, value) => {
@@ -57,17 +58,29 @@ io.on('connection', (socket) => {
         io.emit('message', msg);
     });
 
-    socket.on('joinQueue', async (userId) => {
-        socketMap.set(userId, socket.id)
-        if (!playerMap.has(userId)) {
-            queue.push(userId);
-            console.log(queue);
-        }
-        if (queue.length >= 2) {
-            let player1 = queue.shift();
-            let player2 = queue.shift();
-            console.log(queue);
+    socket.on('joinQueue', async (userId, boardSize) => {
+        initializeBoardSize(boardSize);
+        Board.set(socket.id, boardSize)
+        console.log("joinq", boardSize);
 
+         // Set the socket.id in the nested socketMap
+        if (!socketMap.has(userId)) {
+            socketMap.set(userId, socket.id);
+        }
+
+        // Add userId to the queue if not already present in playerMap
+        if (!playerMap.has(userId) && !queue.get(boardSize).includes(userId)) {
+            queue.get(boardSize).push(userId);
+            console.log(queue.get(boardSize));
+        }
+        console.log("q", queue.get(boardSize));
+        // Check if there are enough players to start a game
+        if (queue.get(boardSize).length >= 2) {
+            let player1 = queue.get(boardSize).shift();
+            let player2 = queue.get(boardSize).shift();
+            console.log(queue.get(boardSize));
+
+            // Check if players are already in a game
             if (playerMap.has(player1)) {
                 console.log("playing");
                 return;
@@ -77,18 +90,19 @@ io.on('connection', (socket) => {
                 return;
             }
             if (player1 === player2) {
-                queue.push(player1);
+                queue.get(boardSize).push(player1);
                 return;
             }
 
+            // Generate game ID and start the game
             let gameId = generateGameID();
             try {
-                let board = await getBoard(4);
+                let board = await getBoard(Number(boardSize));
                 let cellColor = generateColors(board.length);
                 myMap.set(gameId, null);
-                console.log(socketMap, player1, player2)
-                io.to(socketMap.get(player1)).emit("matched", {Game: gameId, Board: board, Color: cellColor});
-                io.to(socketMap.get(player2)).emit("matched", {Game: gameId, Board: board, Color: cellColor});
+                console.log(socketMap, player1, player2);
+                io.to(socketMap.get(player1)).emit("matched", { Game: gameId, Board: board, Color: cellColor });
+                io.to(socketMap.get(player2)).emit("matched", { Game: gameId, Board: board, Color: cellColor });
                 console.log("emitted");
             } catch (error) {
                 console.log("error fetching board", error);
@@ -97,7 +111,8 @@ io.on('connection', (socket) => {
     });
 
     socket.on("playerID", (gameId, userId) => {
-        console.log("gameId", gameId);
+        let boardSize = Board.get(socket.id);
+        console.log("boardsize", boardSize, userId, Board);
         socketMap.set(userId, socket.id)
         if (!myMap.get(gameId) || myMap.get(gameId) === socket.id) {
             myMap.set(gameId, socket.id);
@@ -113,7 +128,7 @@ io.on('connection', (socket) => {
         io.to(playerMap.get(socketMap.get(userId))).emit("opponentMove", board);
     });
 
-    socket.on("gameWon", (userId) => {
+    socket.on("gameWon", (userId, boardSize) => {
         console.log("won the game");
         socketMap.set(userId, socket.id)
         io.to(socketMap.get(userId)).emit("endGame", "you won");
@@ -124,13 +139,23 @@ io.on('connection', (socket) => {
         }
     });
 
-    socket.on('disconnect', (userId) => {
-        socketMap.set(userId, socket.id)
-        queue = queue.filter((num) => num !== socketMap.get(userId) && num !== playerMap.get(socketMap.get(userId)));
-        console.log('user disconnected');
+    socket.on('disconnect', () => {
+        let userId = socket.id
+        let boardSize = Board.get(userId, socket.id);
+        if (boardSize) {
+            console.log(boardSize, "from disconnect", Board, socket.id);
+            queue.set(boardSize, queue.get(boardSize).filter((num) => num !== socketMap.get(userId) && num !== playerMap.get(socketMap.get(userId))));
+            console.log('user disconnected');
+        }
     });
 });
 
+// Function to initialize a new board size
+function initializeBoardSize(boardSize) {
+    if (!queue.has(boardSize)) {
+      queue.set(boardSize, []);
+    }
+  }
 
 function generateGameID() {
     return 'game-' + Math.random().toString(36).substring(2, 9);
@@ -156,7 +181,7 @@ function getRandomColor() {
 
 async function getBoard(boardSize) {
     try {
-        let response = await axios.post("https://flow-free.onrender.com/puzzle/", {size: boardSize});
+        let response = await axios.post("http://localhost:3003/puzzle/", {size: boardSize});
         return response.data;
     } catch (error) {
         return error;
