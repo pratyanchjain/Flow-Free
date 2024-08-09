@@ -181,7 +181,7 @@ function getRandomColor() {
 
 async function getBoard(boardSize) {
     try {
-        let response = await axios.post("http://localhost:3003/puzzle/", {size: boardSize});
+        let response = await axios.post("https://flow-free.onrender.com/puzzle/", {size: boardSize});
         return response.data;
     } catch (error) {
         return error;
