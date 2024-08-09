@@ -2,4 +2,4 @@
 
 import { io } from "socket.io-client";
 
-export const socket = io("https://flowfreeserver.onrender.com");
+export const socket = io("http://localhost:3004");

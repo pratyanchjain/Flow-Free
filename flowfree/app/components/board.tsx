@@ -1,8 +1,9 @@
 "use client"
-import { useState, useEffect, useCallback} from "react";
+import { useState, useEffect, useRef} from "react";
 import React from "react";
+import Draggable, { DraggableEventHandler } from 'react-draggable';
 
-const Board: React.FC<BoardProps> = ( { InputBoard, cellColor, onBoardUpdate = () => {}, mode}) => {
+const Board: React.FC<BoardProps> = ( { InputBoard, cellColor, onBoardUpdate = () => {}, mode, drag}) => {
   const [board, setBoard] = useState<BoardType>([]);
   const [chosenFlow, setChosenFlow] = useState(-1);
   const [draggingOver, setDraggingOver] = useState(false);
@@ -10,7 +11,9 @@ const Board: React.FC<BoardProps> = ( { InputBoard, cellColor, onBoardUpdate = (
   const [flow, setFlow] = useState<BoardType>([]);
   const [endPoint, setEndPoint] = useState<BoardType>([]);
   const [boardSize, setBoardSize] = useState<number>(9);
+  const draggingRef = useRef(false);
 
+  
   useEffect(() => {
     console.log("rerendering")
     const updateBoard = setTimeout(() => {
@@ -134,7 +137,7 @@ const getValidNeighbors = (x: number, y: number, numRows: number, numCols: numbe
 };
 
 
-  const handleOnDrag = (e: React.DragEvent, cell: number) => {
+  const handleOnDrag = (cell: number) => {
     let val = boardValue(board, cell)
     let updatedFlow = flow.map(row=> [...row])
     if (val) {
@@ -158,8 +161,7 @@ const getValidNeighbors = (x: number, y: number, numRows: number, numCols: numbe
   }
 
 
-  const handleOnDragOver = (e: React.DragEvent, idx: number) => {
-    e.preventDefault()
+  const handleOnDragOver = (idx: number) => {
     let updatedFlow = flow.map(row=> [...row])
     if (currCell !== -1 && chosenFlow !== -1) {
       if (isNeighbour(idx, currCell, board.length)) {
@@ -380,6 +382,7 @@ const getValidNeighbors = (x: number, y: number, numRows: number, numCols: numbe
     }
     return cnt === 2;
   }
+  
 
   return (
     <>
@@ -400,25 +403,28 @@ const getValidNeighbors = (x: number, y: number, numRows: number, numCols: numbe
         >
         {isConnector(index) && 
        <div
-       draggable className={`${getConnector(index)}`}
+        {...(drag ? { draggable: true } : {})}
+        className={`${getConnector(index)}`}
         style={getConnectorStyle(cell, index)}
         ></div>
       }
 
+
         <button           
-          draggable
-          onDragStart={(e) => handleOnDrag(e, index)}
-          onDragOver={(e) => handleOnDragOver(e, index)}
+        {...(drag ? { draggable: true } : {})}
+        onDragStart={() => handleOnDrag(index)}
+          onDragOver={() => handleOnDragOver(index)}
           onDrop={handleDrop}
           style= { {
             ...getBackgroundClass(index),
            width: `${getCellSize(index)}px`, 
            height: `${getCellSize(index)}px`
           }}
-          className={`flex justify-center item-center 
+          className={`handle flex justify-center item-center 
           ${isEnd(index) ? "circle" : ""}`}>
           {isEnd(index) ? cell : ""}
           </button>
+
         </div>
         </React.Fragment>
       ))}

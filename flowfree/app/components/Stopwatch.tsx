@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-
-const Stopwatch = ({isActive} : {isActive: Boolean}) => {
+interface StopwatchProps {
+  isActive: boolean;
+  onStop?: (time: number) => void; // Add an optional onStop callback
+}
+const Stopwatch: React.FC<StopwatchProps> = ({isActive, onStop}) => {
   const [time, setTime] = useState<number>(0);
   const startTimeRef = useRef<number | null>(null);
 
@@ -15,7 +18,9 @@ const Stopwatch = ({isActive} : {isActive: Boolean}) => {
         }
         }, 1000 / 60); // Update every 16.67ms (approx. 60fps
     }
-
+    else if (startTimeRef.current !== null && onStop) {
+      onStop(time);
+    }
     return () => {
       if (interval) clearInterval(interval);
     };
@@ -30,8 +35,15 @@ const Stopwatch = ({isActive} : {isActive: Boolean}) => {
     return `${getMinutes}:${getSeconds}.${getMilliseconds}`;
   };
 
+  const stopwatchStyle = {
+    fontFamily: 'monospace',
+    textAlign: 'center' as const,
+    width: '200px', // Slightly larger fixed width
+    margin: '0 auto',
+  };
+
   return (
-      <h4>{formatTime(time)}</h4>
+      <h4 style={stopwatchStyle}>{formatTime(time)}</h4>
   );
 };
 

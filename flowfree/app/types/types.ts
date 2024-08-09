@@ -23,6 +23,7 @@ interface BoardProps {
     cellColor: cellColorType;
     onBoardUpdate?: (newBoardState: BoardType | string) => void;
     mode: string;
+    drag?: boolean
 }
 
 interface MultiplayerProps {

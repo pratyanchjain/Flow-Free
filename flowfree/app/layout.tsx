@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Poppins } from "next/font/google";
-
+import NavbarComponent from "./components/Navbar";
 const poppins = Poppins({
   subsets: ["latin"],
   display: "swap",
@@ -22,7 +22,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={poppins.className}>
+        <NavbarComponent></NavbarComponent>
+        <div className="h-full">
       {children}
+      </div>
+      <footer className="w-full mt-10 p-4 text-center bottom-0 left-0">
+      Made with <span style={{color:"red"}}>&#9829;</span> by Pratyanch Jain
+      </footer>
       </body>
     </html>
   );

@@ -4,7 +4,7 @@ import axios from 'axios';
 import { useRouter } from "next/navigation";
 import Board from "@/app/components/board";
 import { generateColors } from "../utils/colorGenerator";
-
+import {Button, Input} from "@nextui-org/react"
 export default function Practice() {
   const [cellColor, setCellColor] = useState<cellColorType>({});
   const [board, setBoard] = useState<BoardType>([]);
@@ -20,7 +20,7 @@ export default function Practice() {
     if (boardInput <= 1) {
       return;
     }
-    axios.post("https://flow-free.onrender.com/puzzle/", {size: boardInput}).then((response) => {
+    axios.post("http://localhost:3003/puzzle/", {size: boardInput}).then((response) => {
       if (response.data === "Invalid Input") {
         console.log("error!");
         return;
@@ -32,7 +32,7 @@ export default function Practice() {
   }
 
   const getSolve = () => {
-    axios.get("https://flow-free.onrender.com/solution").then((response) => {
+    axios.get("http://localhost:3003/solution").then((response) => {
       setBoard(response.data);
       setMode("solution")
     })
@@ -40,7 +40,7 @@ export default function Practice() {
 
   return (
     <>
-    <button className="bg-white text-black px-4 m-2" onClick={() => router.push("/")}>Back</button>
+    {/* <button className="bg-white text-black px-4 m-2" onClick={() => router.push("/")}>Back</button> */}
     {/* {showAnimation &&
       <Confetti
         width={window.innerWidth}
@@ -48,14 +48,14 @@ export default function Practice() {
         gravity={0.2}
       />
     } */}
-    <Board  InputBoard={board} cellColor={cellColor} mode={mode}/>
-    <div className="flex flex-row gap-4 cursor-pointer my-2" style={{marginTop: "25px"}}>
-      <div className="w-full"><button className=" h-full w-full bg-white rounded text-black px-4" onClick={getSolve}><p>View Solution</p></button></div>
+    <Board  InputBoard={board} cellColor={cellColor} mode={mode} drag={true}/>
+    <div className="flex flex-row gap-4 my-2 w-full" style={{marginTop: "25px"}}>
+      <div className="w-full "><Button className="flex w-full h-full" color="warning" onClick={getSolve}><p>View Solution</p></Button></div>
       <div className="w-full flex flex-col gap-2 bg-black">
         <label>
-          <input placeholder="Enter board size: " className="w-full rounded p-2 text-black" type="number" defaultValue={boardInput} onChange={(num) => setBoardInput(Number(num.target.value))}/>
+          <Input variant="bordered" size="lg" label="Enter board size: " type="number" defaultValue={boardInput.toString()} onChange={(num) => setBoardInput(Number(num.target.value))}/>
         </label>
-        <div className="fit-content bg-white rounded p-2 text-black"  onClick={genBoard}>Generate Board </div>
+        <Button  color="primary" onClick={genBoard}>Generate Board </Button>
         </div>
     </div>
     </>

@@ -1,55 +1,30 @@
 {
   "pages": {
-    "/_not-found/page": [
-      "static/chunks/webpack-c58afd5598c07a94.js",
-      "static/chunks/fd9d1056-cd8d732bc9bb01bb.js",
-      "static/chunks/23-1647efb0937a1171.js",
-      "static/chunks/main-app-1207d742a3a0197f.js",
-      "static/chunks/app/_not-found/page-03afa407f96a4142.js"
+    "/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/page.js"
     ],
     "/layout": [
-      "static/chunks/webpack-c58afd5598c07a94.js",
-      "static/chunks/fd9d1056-cd8d732bc9bb01bb.js",
-      "static/chunks/23-1647efb0937a1171.js",
-      "static/chunks/main-app-1207d742a3a0197f.js",
-      "static/css/3fa966ddabeef235.css",
-      "static/css/074ed6992559d418.css",
-      "static/chunks/app/layout-d38c2e4f329836fa.js"
-    ],
-    "/page": [
-      "static/chunks/webpack-c58afd5598c07a94.js",
-      "static/chunks/fd9d1056-cd8d732bc9bb01bb.js",
-      "static/chunks/23-1647efb0937a1171.js",
-      "static/chunks/main-app-1207d742a3a0197f.js",
-      "static/chunks/app/page-6a6d888739426ed3.js"
-    ],
-    "/duel/page": [
-      "static/chunks/webpack-c58afd5598c07a94.js",
-      "static/chunks/fd9d1056-cd8d732bc9bb01bb.js",
-      "static/chunks/23-1647efb0937a1171.js",
-      "static/chunks/main-app-1207d742a3a0197f.js",
-      "static/chunks/870-e99bff73c8d194ab.js",
-      "static/chunks/374-4f1b4dde3e78e080.js",
-      "static/chunks/app/duel/page-6afb88d99f46e93d.js"
-    ],
-    "/duel/[multiplayer]/page": [
-      "static/chunks/webpack-c58afd5598c07a94.js",
-      "static/chunks/fd9d1056-cd8d732bc9bb01bb.js",
-      "static/chunks/23-1647efb0937a1171.js",
-      "static/chunks/main-app-1207d742a3a0197f.js",
-      "static/chunks/870-e99bff73c8d194ab.js",
-      "static/chunks/374-4f1b4dde3e78e080.js",
-      "static/chunks/734-b55c64fa331844e9.js",
-      "static/chunks/app/duel/[multiplayer]/page-f3c546d1ba4bfafa.js"
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/css/app/layout.css",
+      "static/chunks/app/layout.js"
     ],
     "/practice/page": [
-      "static/chunks/webpack-c58afd5598c07a94.js",
-      "static/chunks/fd9d1056-cd8d732bc9bb01bb.js",
-      "static/chunks/23-1647efb0937a1171.js",
-      "static/chunks/main-app-1207d742a3a0197f.js",
-      "static/chunks/870-e99bff73c8d194ab.js",
-      "static/chunks/170-a3d113e3037928cf.js",
-      "static/chunks/app/practice/page-f6ea805362da7fbc.js"
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/practice/page.js"
+    ],
+    "/duel/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/duel/page.js"
+    ],
+    "/duel/[multiplayer]/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/duel/[multiplayer]/page.js"
     ]
   }
 }

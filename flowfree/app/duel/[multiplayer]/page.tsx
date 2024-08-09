@@ -22,7 +22,14 @@ const Multiplayer = () => {
     const [userId, setUserId] = useState('');
     const [isConnected, setIsConnected] = useState(false);
     const [transport, setTransport] = useState("N/A");
+    const [finalTime, setFinalTime] = useState<number>(0.00);
+
     useEffect(() => {
+        console.log("winner ", winner);
+        if (winner) {
+            console.log("pushing to router");
+            router.push("/duel/");
+        }
         let user = localStorage.getItem('userId');
         if (!user) {
           user = (Math.random() * 1000).toString();
@@ -34,7 +41,7 @@ const Multiplayer = () => {
 
     useEffect(() => {
         if (userId !== "") {
-            socket.emit("userID", userId, socket.id)
+            socket.emit("userID", userId, board1.length)
         }
 
         if (socket.connected) {
@@ -92,7 +99,7 @@ const Multiplayer = () => {
         console.log("reaching updateMove", board)
         if (board === "solved!") {
             console.log("emitted won")
-            socket.emit("gameWon", userId);
+            socket.emit("gameWon", userId, board.length);
         }
         else {
             let changed = false
@@ -112,53 +119,58 @@ const Multiplayer = () => {
             }
         }
     }
+
+    const handleStopwatchStop = (time: number) => {
+        setFinalTime(time); // Capture the time when the stopwatch stops
+    };
+
     return (
         <>
+        <script src="drag-drop-touch.esm.min.js?autoload" type="module"></script>
         {game !== '' ? 
-        <div className="h-full">
-            <div>
-      <p>Status: { isConnected ? "connected" : "disconnected" }</p>
-      <p>Transport: { transport }</p>
-    </div>
-            {/* <h1 className="text-left">{game}</h1> */}
-            <div className="text-center flex"><Stopwatch isActive={winner===''}/></div>
+        <div className="h-full p-4">
+            <Button variant="bordered" className="text-white" onClick={() => router.push("/")}>Exit</Button>
             {winner !== '' ?
             <Modal backdrop={"opaque"} 
+            isDismissable={false}
             classNames={{
                 body: "py-6",
                 backdrop: "bg-[#000000]/50 backdrop-opacity-40",
-                base: "border-[#000000] bg-[#000000] dark:bg-[#000000] text-[#FFFFFF]",
-                header: "border-b-[1px] border-[#000000]",
-                footer: "border-t-[1px] border-[#000000]",
-                closeButton: "hover:bg-white/5 active:bg-white/10",
+                base:  `border-4 border-${winner === "1" ? "success" : "danger"} bg-black light:bg-[#000000] text-[#FFFFFF]`,
+                // header: "border-b-[1px] border-[#000000]",
+                // footer: "border-t-[1px] border-[#000000]",
+                // closeButton: "hover:bg-white/5 active:bg-white/10",
               }}
               isOpen={isOpen} onOpenChange={onOpenChange}>
             <ModalContent>
               {(onClose) => (
                 <>
-                  <ModalHeader className="flex flex-col gap-1">Game Over</ModalHeader>
+                  <ModalHeader className="flex flex-col gap-1">
+                  <h4 className="pt-4">{winner === "1" ? "You won!": "You lost"}</h4>
+                  </ModalHeader>
                   <ModalBody>
-                    {winner === "1" ? "You won!": "You lost"}
+                  {finalTime !== null && <div>Final Time: {finalTime}</div>}
                   </ModalBody>
                   <ModalFooter className="w-full">
-                    <Button color="danger" variant="light" onPress={onClose}>
+                    <Button className="w-full" color="danger" onPress={onClose}>
                       Close
                     </Button>
-                    <Button onClick={() => router.push("/duel/")}>Play Again</Button>
+                    <Button color="primary" className="w-full" onClick={() => router.push("/duel/")}>Play Again</Button>
                   </ModalFooter>
                 </>
               )}
             </ModalContent>
           </Modal>
             : <div></div> }
+        <div className="w-full text-center"><Stopwatch isActive={winner===''} onStop={handleStopwatchStop}/></div>
         <div className="flex flex-lg-row flex-col lg:flex-row m-4 text-center">
             <div className="flex flex-col">
                 <h3>You</h3>
-                <Board key={1} InputBoard={board1} cellColor={cellColor} onBoardUpdate={updateMove} mode="duel"/>
+                <Board key={1} drag={winner ? false : true} InputBoard={board1} cellColor={cellColor} onBoardUpdate={updateMove} mode="duel"/>
             </div>
             <div className="flex flex-col">
                 <h3>Opponent</h3>
-            <Board key={2} InputBoard={board2} cellColor={cellColor}  mode="duel"/>
+                <Board key={2} drag={false} InputBoard={board2} cellColor={cellColor}  mode="duel"/>
             </div>
         </div></div>        
         :
